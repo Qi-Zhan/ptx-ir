@@ -1,9 +1,12 @@
-use codespan_reporting::diagnostic::Diagnostic;
+//! Intermediate representation of PTX code.
+
+use codespan_reporting::{diagnostic::Diagnostic, files::SimpleFiles, term::termcolor::Buffer};
 use logos::Span;
+use std::path::Path;
 
 use crate::{lexer::Token, parser::Parser};
 
-/// PTX module
+/// PTX module, the top-level structure in a PTX file.
 #[derive(Debug)]
 pub struct Module {
     pub version: Version,
@@ -11,6 +14,7 @@ pub struct Module {
     pub address_size: AddressSize,
     pub directives: Vec<Directive>,
 }
+
 /// A PTX statement is either a directive or an instruction.
 /// Statements begin with an optional label and end with a semicolon.
 #[derive(Debug)]
@@ -33,9 +37,10 @@ pub struct Instruction {
 #[derive(Debug)]
 pub enum Directive {
     Function(Function),
-    Variable(VariableDeclaration),
+    Variable(VariableDecl),
     Loc,
     Section,
+    Pragma(String),
 }
 
 #[derive(Debug)]
@@ -54,13 +59,15 @@ pub enum AddressSize {
 }
 
 #[derive(Debug)]
-pub struct VariableDeclaration {
+pub struct VariableDecl {
     pub name: String,
     pub state_space: Option<StateSpace>,
     pub linkage: Option<LinkingDirective>,
     pub ty: Type,
     pub alignment: Option<u32>,
     pub vector: Option<u32>,
+    pub array: Option<u32>,
+    pub init: Option<Operand>,
     pub(crate) span: Span,
 }
 
@@ -149,9 +156,16 @@ pub enum Opcode {
         ftz: bool,
     },
     Fma {
-        rounding: Option<RoundingMode>,
+        rounding: Option<FloatRoundingMode>,
         ty: Type,
         ftz: bool,
+    },
+    Mad {
+        mode: Option<MulMode>,
+        rounding: Option<FloatRoundingMode>,
+        ty: Type,
+        ftz: bool,
+        sat: bool,
     },
     Neg(Type),
     Max(Type),
@@ -163,7 +177,12 @@ pub enum Opcode {
     Cvt {
         from: Type,
         to: Type,
-        rounding: Option<RoundingMode>,
+        rounding: Option<FloatRoundingMode>,
+    },
+    Cvta {
+        to: bool,
+        state_space: StateSpace,
+        size: Type,
     },
     Cp,
     Ret,
@@ -173,7 +192,7 @@ pub enum Opcode {
     Mul {
         ty: Type,
         mode: Option<MulMode>,
-        rounding: Option<RoundingMode>,
+        rounding: Option<FloatRoundingMode>,
         ftz: bool,
         saturate: bool,
     },
@@ -188,11 +207,13 @@ pub enum Opcode {
     SetpEq,
     Ld(Type),
     LdMatrix {
-        direction: Vec<Token>,
+        shape: Shape2,
         ty: Type,
+        xnum: u32,
+        shared: bool,
     },
     Mma {
-        shape: Shape,
+        shape: Shape3,
         atype: Type,
         btype: Type,
         ctype: Type,
@@ -279,14 +300,28 @@ pub struct Predicate {
 }
 
 #[derive(Debug)]
-pub enum RoundingMode {
+pub enum FloatRoundingMode {
     /// Round to nearest even
     Rn,
-    /// Round towards zero
+    /// Round to nearest, ties away from zero
     Rna,
+    /// Round towards zero
     Rz,
+    /// Round towards -∞
     Rm,
+    /// Round towards +∞
     Rp,
+}
+
+enum IntegerRoundingMode {
+    /// Round to nearest integer, choosing even integer if source is equidistant between two integers.
+    Rni,
+    /// Round to nearest integer in the direction of zero
+    Rzi,
+    /// Round to nearest integer in direction of negative infinity
+    Rmi,
+    /// Round to nearest integer in direction of positive infinity
+    Rpi,
 }
 
 #[derive(Debug)]
@@ -307,9 +342,17 @@ pub enum PredicateOp {
 }
 
 #[derive(Debug)]
-pub enum Shape {
-    M16n8k16,
-    M16n8k32,
+pub enum Shape3 {
+    M16N8K16,
+    M16N8K32,
+}
+
+#[derive(Debug)]
+pub enum Shape2 {
+    M8N8,
+    M8N16,
+    M16N8,
+    M16N16,
 }
 
 impl Module {
@@ -317,6 +360,23 @@ impl Module {
         let mut parser = Parser::new(file_id, source);
         parser.parse()
     }
+
+    pub fn from_ptx_path(path: &Path) -> Result<Self, String> {
+        let mut files = SimpleFiles::new();
+        let content = std::fs::read_to_string(path).expect("failed to read file");
+        let file_id = files.add(
+            path.to_str().expect("failed to convert path to str"),
+            &content,
+        );
+        Self::from_ptx(&content, file_id).map_err(|diagnostic| emit_string(diagnostic, files))
+    }
+}
+
+fn emit_string(diagnostic: Diagnostic<usize>, files: SimpleFiles<&str, &String>) -> String {
+    let mut buffer = Buffer::ansi();
+    let config = codespan_reporting::term::Config::default();
+    codespan_reporting::term::emit(&mut buffer, &config, &files, &diagnostic).unwrap();
+    String::from_utf8(buffer.into_inner()).unwrap()
 }
 
 impl From<Token> for MulMode {
@@ -330,24 +390,14 @@ impl From<Token> for MulMode {
     }
 }
 
-impl From<Token> for RoundingMode {
+impl From<Token> for FloatRoundingMode {
     fn from(token: Token) -> Self {
         match token {
-            Token::Rn => RoundingMode::Rn,
-            Token::Rna => RoundingMode::Rna,
-            Token::Rz => RoundingMode::Rz,
-            Token::Rm => RoundingMode::Rm,
-            Token::Rp => RoundingMode::Rp,
-            _ => unreachable!(),
-        }
-    }
-}
-
-impl From<Token> for Shape {
-    fn from(token: Token) -> Self {
-        match token {
-            Token::M16N8K16 => Shape::M16n8k16,
-            Token::M16N8K32 => Shape::M16n8k32,
+            Token::Rn => FloatRoundingMode::Rn,
+            Token::Rna => FloatRoundingMode::Rna,
+            Token::Rz => FloatRoundingMode::Rz,
+            Token::Rm => FloatRoundingMode::Rm,
+            Token::Rp => FloatRoundingMode::Rp,
             _ => unreachable!(),
         }
     }

@@ -491,8 +491,8 @@ pub enum Token {
     #[regex("0[bB][01]+", |lex| lex.slice().parse::<u64>().unwrap(),priority = 2)]
     BinaryConstant(u64),
     /// decimal literal       {nonzero-digit}{digit}*U?
-    // #[regex("-?[1-9][0-9]*", priority = 2)]
-    #[regex("-?[0-9]+", |lex| lex.slice().parse::<i64>().unwrap(),priority = 3)]
+    #[regex("-?[1-9][0-9]*", |lex| lex.slice().parse::<i64>().unwrap(), priority = 2)]
+    #[regex("-?0", |_| 0, priority = 2)]
     DecimalConstant(i64),
     /// hexadecimal literal:  0[xX]{hexdigit}+U?
     #[regex("0[xX][0-9a-fA-F]+", lex_hex, priority = 2)]
@@ -500,13 +500,11 @@ pub enum Token {
     /// octal literal:        0{octal digit}+U?
     #[regex("0[0-7]+", lex_octal, priority = 2)]
     OctalConstant(u64),
+    /// floating-point constants
     #[regex("0[dDfF][0-9a-fA-F]{8}", lex_single_float)]
     SingleConstant(f32),
     #[regex("0[dDfF][0-9a-fA-F]{16}", lex_double_float)]
     DoubleConstant(f64),
-    // Floating-point constants
-    // #[regex("([0-9]*\.[0-9]+|[0-9]+\.)([eE][+-]?[0-9]+)?[fFlL]?")] FloatConstant,
-    // #[regex("0[xX]([0-9a-fA-F]*\.[0-9a-fA-F]+|[0-9a-fA-F]+\.)([pP][+-]?[0-9]+)?[fFlL]?")] HexFloatConstant,
 
     // Operators and symbols
     #[token("+")]
@@ -657,6 +655,10 @@ pub enum Token {
     M8N16,
     #[token(".x4")]
     X4,
+    #[token(".x1")]
+    X1,
+    #[token(".x2")]
+    X2,
     #[token(".row")]
     Row,
     #[token(".col")]
@@ -673,6 +675,8 @@ pub enum Token {
     Trans,
     #[token(".full")]
     Full,
+    #[token(".to")]
+    To,
 }
 
 impl Token {
@@ -721,9 +725,6 @@ impl Token {
                 | Token::Shared
                 | Token::Global
                 | Token::WaitGroup
-                | Token::M8N8
-                | Token::M8N16
-                | Token::X4
         )
     }
 }
@@ -1021,6 +1022,8 @@ impl fmt::Display for Token {
             Token::M8N8 => f.write_str(".m8n8"),
             Token::M8N16 => f.write_str(".m8n16"),
             Token::X4 => f.write_str(".x4"),
+            Token::X1 => f.write_str(".x1"),
+            Token::X2 => f.write_str(".x2"),
             Token::Row => f.write_str(".row"),
             Token::Col => f.write_str(".col"),
             Token::M16N8K16 => f.write_str(".m16n8k16"),
@@ -1032,6 +1035,7 @@ impl fmt::Display for Token {
             Token::NTIdX => f.write_str("%ntid.x"),
             Token::NTIdY => f.write_str("%ntid.y"),
             Token::NTIdZ => f.write_str("%ntid.z"),
+            Token::To => f.write_str(".to"),
         }
     }
 }

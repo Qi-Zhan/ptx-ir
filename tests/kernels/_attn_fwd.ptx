@@ -1,0 +1,2191 @@
+.version 8.4
+.target sm_35
+.address_size 64
+
+	// .globl	_attn_fwd               // -- Begin function _attn_fwd
+.extern .shared .align 16 .b8 global_smem[];
+.global .align 1 .b8 _$_str[11] = {95, 95, 67, 85, 68, 65, 95, 70, 84, 90};
+                                        // @_attn_fwd
+.visible .entry _attn_fwd(
+	.param .u64 .ptr .global .align 1 _attn_fwd_param_0,
+	.param .u64 .ptr .global .align 1 _attn_fwd_param_1,
+	.param .u64 .ptr .global .align 1 _attn_fwd_param_2,
+	.param .f32 _attn_fwd_param_3,
+	.param .u64 .ptr .global .align 1 _attn_fwd_param_4,
+	.param .u64 .ptr .global .align 1 _attn_fwd_param_5,
+	.param .u32 _attn_fwd_param_6,
+	.param .u32 _attn_fwd_param_7,
+	.param .u32 _attn_fwd_param_8,
+	.param .u32 _attn_fwd_param_9,
+	.param .u32 _attn_fwd_param_10,
+	.param .u32 _attn_fwd_param_11,
+	.param .u32 _attn_fwd_param_12,
+	.param .u32 _attn_fwd_param_13,
+	.param .u32 _attn_fwd_param_14,
+	.param .u32 _attn_fwd_param_15,
+	.param .u32 _attn_fwd_param_16,
+	.param .u32 _attn_fwd_param_17,
+	.param .u32 _attn_fwd_param_18,
+	.param .u64 .ptr .global .align 1 _attn_fwd_param_19
+)
+.reqntid 128, 1, 1
+{
+	.reg .pred 	%p<55>;
+	.reg .b16 	%rs<97>;
+	.reg .b32 	%r<1149>;
+	.reg .f32 	%f<1185>;
+	.reg .b64 	%rd<210>;
+	.loc	1 81 0                          // attention_precision.py:81:0
+$L__func_begin0:
+	.loc	1 81 0                          // attention_precision.py:81:0
+
+// %bb.0:
+	ld.param.u64 	%rd45, [_attn_fwd_param_2];
+	ld.param.u64 	%rd44, [_attn_fwd_param_1];
+	ld.param.u64 	%rd60, [_attn_fwd_param_0];
+$L__tmp0:
+	.loc	1 113 28                        // attention_precision.py:113:28
+	// begin inline asm
+	mov.u32 %r71, %ctaid.x;
+	// end inline asm
+	.loc	1 114 27                        // attention_precision.py:114:27
+	// begin inline asm
+	mov.u32 %r72, %ctaid.y;
+	// end inline asm
+	ld.param.f32 	%f229, [_attn_fwd_param_3];
+	ld.param.u32 	%r105, [_attn_fwd_param_6];
+	.loc	1 117 38                        // attention_precision.py:117:38
+	mul.wide.s32 	%rd1, %r72, %r105;
+	.loc	1 121 17                        // attention_precision.py:121:17
+	shl.b64 	%rd61, %rd1, 1;
+	add.s64 	%rd62, %rd60, %rd61;
+	.loc	1 124 27                        // attention_precision.py:124:27
+	shl.b32 	%r2, %r71, 6;
+	ld.param.s32 	%rd63, [_attn_fwd_param_8];
+	.loc	1 126 8                         // attention_precision.py:126:8
+	cvt.s64.s32 	%rd2, %r2;
+	.loc	1 130 17                        // attention_precision.py:130:17
+	add.s64 	%rd3, %rd45, %rd61;
+	ld.param.u32 	%r106, [_attn_fwd_param_14];
+	.loc	1 135 8                         // attention_precision.py:135:8
+	cvt.s64.s32 	%rd4, %r106;
+	ld.param.u32 	%r107, [_attn_fwd_param_11];
+	.loc	1 138 17                        // attention_precision.py:138:17
+	add.s64 	%rd5, %rd44, %rd61;
+	.loc	1 143 8                         // attention_precision.py:143:8
+	cvt.s64.s32 	%rd6, %r107;
+	.loc	1 154 46                        // attention_precision.py:154:46
+	mov.u32 	%r3, %tid.x;
+	and.b32  	%r4, %r3, 31;
+	shr.u32 	%r5, %r3, 5;
+	and.b32  	%r6, %r3, 32;
+	and.b32  	%r7, %r3, 64;
+	shr.u32 	%r8, %r3, 3;
+	bfe.u32 	%r108, %r3, 3, 4;
+	or.b32  	%r109, %r108, 16;
+	or.b32  	%r110, %r108, 32;
+	or.b32  	%r111, %r108, 48;
+	shl.b32 	%r9, %r3, 3;
+	and.b32  	%r112, %r9, 56;
+	bfe.u32 	%r113, %r3, 2, 3;
+	or.b32  	%r114, %r6, %r7;
+	shr.u32 	%r115, %r114, 1;
+	.loc	1 162 16                        // attention_precision.py:162:16
+	mul.f32 	%f1, %f229, 0f3FB8AA3B;
+	.loc	1 164 16                        // attention_precision.py:164:16
+	cvt.u64.u32 	%rd7, %r108;
+	cvt.u64.u32 	%rd8, %r109;
+	cvt.u64.u32 	%rd64, %r110;
+	cvt.u64.u32 	%rd65, %r111;
+	cvt.u64.u32 	%rd9, %r112;
+	or.b64  	%rd10, %rd2, %rd7;
+	or.b64  	%rd11, %rd2, %rd8;
+	or.b64  	%rd12, %rd2, %rd64;
+	or.b64  	%rd13, %rd2, %rd65;
+	mul.lo.s64 	%rd66, %rd10, %rd63;
+	mul.lo.s64 	%rd67, %rd11, %rd63;
+	mul.lo.s64 	%rd68, %rd12, %rd63;
+	mul.lo.s64 	%rd69, %rd13, %rd63;
+	shl.b64 	%rd70, %rd66, 1;
+	add.s64 	%rd71, %rd62, %rd70;
+	mul.wide.u32 	%rd72, %r112, 2;
+	add.s64 	%rd48, %rd71, %rd72;
+	shl.b64 	%rd73, %rd67, 1;
+	add.s64 	%rd74, %rd62, %rd73;
+	add.s64 	%rd49, %rd74, %rd72;
+	shl.b64 	%rd75, %rd68, 1;
+	add.s64 	%rd76, %rd62, %rd75;
+	add.s64 	%rd50, %rd76, %rd72;
+	shl.b64 	%rd77, %rd69, 1;
+	add.s64 	%rd78, %rd62, %rd77;
+	add.s64 	%rd51, %rd78, %rd72;
+	// begin inline asm
+	mov.u32 %r73, 0x0;
+	mov.u32 %r74, 0x0;
+	mov.u32 %r75, 0x0;
+	mov.u32 %r76, 0x0;
+	ld.global.v4.b32 { %r73, %r74, %r75, %r76 }, [ %rd48 + 0 ];
+	// end inline asm
+	// begin inline asm
+	mov.u32 %r77, 0x0;
+	mov.u32 %r78, 0x0;
+	mov.u32 %r79, 0x0;
+	mov.u32 %r80, 0x0;
+	ld.global.v4.b32 { %r77, %r78, %r79, %r80 }, [ %rd49 + 0 ];
+	// end inline asm
+	// begin inline asm
+	mov.u32 %r81, 0x0;
+	mov.u32 %r82, 0x0;
+	mov.u32 %r83, 0x0;
+	mov.u32 %r84, 0x0;
+	ld.global.v4.b32 { %r81, %r82, %r83, %r84 }, [ %rd50 + 0 ];
+	// end inline asm
+	// begin inline asm
+	mov.u32 %r85, 0x0;
+	mov.u32 %r86, 0x0;
+	mov.u32 %r87, 0x0;
+	mov.u32 %r88, 0x0;
+	ld.global.v4.b32 { %r85, %r86, %r87, %r88 }, [ %rd51 + 0 ];
+	// end inline asm
+	xor.b32  	%r132, %r9, %r3;
+	and.b32  	%r133, %r132, 56;
+	shl.b32 	%r134, %r108, 6;
+	or.b32  	%r13, %r133, %r134;
+	shl.b32 	%r135, %r13, 1;
+	mov.u32 	%r136, global_smem;
+	add.s32 	%r137, %r136, %r135;
+	st.shared.v4.b32 	[%r137], {%r73, %r74, %r75, %r76};
+	st.shared.v4.b32 	[%r137+2048], {%r77, %r78, %r79, %r80};
+	st.shared.v4.b32 	[%r137+4096], {%r81, %r82, %r83, %r84};
+	st.shared.v4.b32 	[%r137+6144], {%r85, %r86, %r87, %r88};
+$L__tmp1:
+	.loc	1 45 33                         // attention_precision.py:45:33
+	setp.lt.s32 	%p1, %r2, 1;
+	setp.gt.s32 	%p2, %r2, 0;
+	.loc	1 48 20                         // attention_precision.py:48:20
+	mul.lo.s64 	%rd79, %rd6, %rd7;
+	mul.lo.s64 	%rd80, %rd6, %rd8;
+	shl.b64 	%rd81, %rd79, 1;
+	add.s64 	%rd82, %rd5, %rd81;
+	add.s64 	%rd52, %rd82, %rd72;
+	shl.b64 	%rd83, %rd80, 1;
+	add.s64 	%rd84, %rd5, %rd83;
+	add.s64 	%rd53, %rd84, %rd72;
+	add.s32 	%r89, %r137, 8192;
+	add.s32 	%r91, %r137, 10240;
+	selp.b32 	%r90, 16, 0, %p2;
+	// begin inline asm
+	// end inline asm
+	// begin inline asm
+	// end inline asm
+	// begin inline asm
+	cp.async.commit_group ;
+	// end inline asm
+	.loc	1 66 20                         // attention_precision.py:66:20
+	mul.lo.s64 	%rd85, %rd4, %rd7;
+	mul.lo.s64 	%rd86, %rd4, %rd8;
+	shl.b64 	%rd87, %rd85, 1;
+	add.s64 	%rd88, %rd3, %rd87;
+	add.s64 	%rd54, %rd88, %rd72;
+	shl.b64 	%rd89, %rd86, 1;
+	add.s64 	%rd90, %rd3, %rd89;
+	add.s64 	%rd55, %rd90, %rd72;
+	add.s32 	%r93, %r137, 16384;
+	add.s32 	%r95, %r137, 18432;
+	// begin inline asm
+	cp.async.cg.shared.global [ %r93 + 0 ], [ %rd54 + 0 ], 0x10, %r90;
+	// end inline asm
+	// begin inline asm
+	cp.async.cg.shared.global [ %r95 + 0 ], [ %rd55 + 0 ], 0x10, %r90;
+	// end inline asm
+	// begin inline asm
+	cp.async.commit_group ;
+	// end inline asm
+	.loc	1 45 33                         // attention_precision.py:45:33
+	setp.gt.s32 	%p3, %r2, 32;
+	.loc	1 48 20                         // attention_precision.py:48:20
+	mul.wide.s32 	%rd91, %r107, 32;
+	add.s64 	%rd92, %rd80, %rd91;
+	shl.b64 	%rd93, %rd91, 1;
+	add.s64 	%rd56, %rd52, %rd93;
+	shl.b64 	%rd94, %rd92, 1;
+	add.s64 	%rd95, %rd5, %rd94;
+	add.s64 	%rd57, %rd95, %rd72;
+	bar.sync 	0;
+	add.s32 	%r97, %r137, 12288;
+	add.s32 	%r99, %r137, 14336;
+	selp.b32 	%r98, 16, 0, %p3;
+	// begin inline asm
+	cp.async.cg.shared.global [ %r97 + 0 ], [ %rd56 + 0 ], 0x10, %r98;
+	// end inline asm
+	// begin inline asm
+	cp.async.cg.shared.global [ %r99 + 0 ], [ %rd57 + 0 ], 0x10, %r98;
+	// end inline asm
+	// begin inline asm
+	cp.async.commit_group ;
+	// end inline asm
+	.loc	1 66 20                         // attention_precision.py:66:20
+	mul.wide.s32 	%rd96, %r106, 32;
+	add.s64 	%rd97, %rd86, %rd96;
+	shl.b64 	%rd98, %rd96, 1;
+	add.s64 	%rd58, %rd54, %rd98;
+	shl.b64 	%rd99, %rd97, 1;
+	add.s64 	%rd100, %rd3, %rd99;
+	add.s64 	%rd59, %rd100, %rd72;
+	add.s32 	%r101, %r137, 20480;
+	add.s32 	%r103, %r137, 22528;
+	// begin inline asm
+	cp.async.cg.shared.global [ %r101 + 0 ], [ %rd58 + 0 ], 0x10, %r98;
+	// end inline asm
+	// begin inline asm
+	cp.async.cg.shared.global [ %r103 + 0 ], [ %rd59 + 0 ], 0x10, %r98;
+	// end inline asm
+	// begin inline asm
+	cp.async.commit_group ;
+	// end inline asm
+	.loc	1 48 20                         // attention_precision.py:48:20
+	// begin inline asm
+	cp.async.wait_group 0x2;
+	// end inline asm
+	bar.sync 	0;
+	mov.f32 	%f1181, 0fFF800000;
+	mov.f32 	%f1111, 0f00000000;
+	mov.f32 	%f1147, 0f3F800000;
+	and.b32  	%r1132, %r3, 7;
+	and.b32  	%r1133, %r8, 1;
+	shr.u32 	%r1134, %r4, 4;
+	shl.b32 	%r1135, %r5, 1;
+	shl.b32 	%r1136, %r3, 6;
+	shl.b64 	%rd200, %rd4, 6;
+	shl.b64 	%rd201, %rd6, 6;
+	mov.f32 	%f1148, %f1147;
+	mov.f32 	%f1112, %f1111;
+	mov.f32 	%f1113, %f1111;
+	mov.f32 	%f1114, %f1111;
+	mov.f32 	%f1115, %f1111;
+	mov.f32 	%f1116, %f1111;
+	mov.f32 	%f1117, %f1111;
+	mov.f32 	%f1118, %f1111;
+	mov.f32 	%f1119, %f1111;
+	mov.f32 	%f1120, %f1111;
+	mov.f32 	%f1121, %f1111;
+	mov.f32 	%f1122, %f1111;
+	mov.f32 	%f1123, %f1111;
+	mov.f32 	%f1124, %f1111;
+	mov.f32 	%f1125, %f1111;
+	mov.f32 	%f1126, %f1111;
+	mov.f32 	%f1127, %f1111;
+	mov.f32 	%f1128, %f1111;
+	mov.f32 	%f1129, %f1111;
+	mov.f32 	%f1130, %f1111;
+	mov.f32 	%f1131, %f1111;
+	mov.f32 	%f1132, %f1111;
+	mov.f32 	%f1133, %f1111;
+	mov.f32 	%f1134, %f1111;
+	mov.f32 	%f1135, %f1111;
+	mov.f32 	%f1136, %f1111;
+	mov.f32 	%f1137, %f1111;
+	mov.f32 	%f1138, %f1111;
+	mov.f32 	%f1139, %f1111;
+	mov.f32 	%f1140, %f1111;
+	mov.f32 	%f1141, %f1111;
+	mov.f32 	%f1142, %f1111;
+	mov.f32 	%f1182, %f1181;
+	.loc	1 45 33                         // attention_precision.py:45:33
+	@%p1 bra 	$L__BB0_3;
+// %bb.1:                               // %.lr.ph
+	.loc	1 0 33                          // attention_precision.py:0:33
+	add.s32 	%r22, %r2, -64;
+	and.b32  	%r146, %r1135, 6;
+	or.b32  	%r147, %r146, %r1133;
+	xor.b32  	%r148, %r1134, %r1132;
+	shl.b32 	%r149, %r147, 9;
+	shl.b32 	%r150, %r1132, 6;
+	or.b32  	%r151, %r149, %r150;
+	shl.b32 	%r152, %r148, 3;
+	or.b32  	%r153, %r151, %r152;
+	shl.b32 	%r154, %r153, 1;
+	add.s32 	%r190, %r136, %r154;
+	or.b32  	%r156, %r1134, 2;
+	xor.b32  	%r157, %r156, %r1132;
+	shl.b32 	%r158, %r157, 3;
+	or.b32  	%r159, %r151, %r158;
+	shl.b32 	%r160, %r159, 1;
+	add.s32 	%r195, %r136, %r160;
+	or.b32  	%r161, %r1134, 4;
+	xor.b32  	%r162, %r161, %r1132;
+	shl.b32 	%r163, %r162, 3;
+	or.b32  	%r164, %r151, %r163;
+	shl.b32 	%r165, %r164, 1;
+	add.s32 	%r200, %r136, %r165;
+	or.b32  	%r166, %r1134, 6;
+	xor.b32  	%r167, %r166, %r1132;
+	shl.b32 	%r168, %r167, 3;
+	or.b32  	%r169, %r151, %r168;
+	shl.b32 	%r170, %r169, 1;
+	add.s32 	%r205, %r136, %r170;
+	or.b32  	%r171, %r1133, 2;
+	or.b32  	%r172, %r1133, 4;
+	or.b32  	%r173, %r1133, 6;
+	xor.b32  	%r174, %r1133, %r1132;
+	shl.b32 	%r175, %r1134, 9;
+	or.b32  	%r176, %r175, %r150;
+	shl.b32 	%r177, %r174, 3;
+	or.b32  	%r27, %r177, %r176;
+	xor.b32  	%r178, %r171, %r1132;
+	shl.b32 	%r179, %r178, 3;
+	or.b32  	%r28, %r179, %r176;
+	xor.b32  	%r180, %r172, %r1132;
+	shl.b32 	%r181, %r180, 3;
+	or.b32  	%r29, %r181, %r176;
+	xor.b32  	%r182, %r173, %r1132;
+	shl.b32 	%r183, %r182, 3;
+	or.b32  	%r30, %r183, %r176;
+	and.b32  	%r185, %r1136, 960;
+	or.b32  	%r31, %r152, %r185;
+	or.b32  	%r32, %r158, %r185;
+	or.b32  	%r33, %r163, %r185;
+	or.b32  	%r34, %r168, %r185;
+	.loc	1 45 33                         // attention_precision.py:45:33
+	mul.wide.u32 	%rd14, %r1132, 16;
+	or.b64  	%rd101, %rd7, 80;
+	mul.lo.s64 	%rd102, %rd101, %rd4;
+	shl.b64 	%rd103, %rd102, 1;
+	add.s64 	%rd105, %rd103, %rd61;
+	add.s64 	%rd205, %rd45, %rd105;
+	mul.lo.s64 	%rd106, %rd101, %rd6;
+	shl.b64 	%rd107, %rd106, 1;
+	add.s64 	%rd108, %rd107, %rd61;
+	add.s64 	%rd204, %rd44, %rd108;
+	or.b64  	%rd109, %rd7, 64;
+	mul.lo.s64 	%rd110, %rd109, %rd4;
+	shl.b64 	%rd111, %rd110, 1;
+	add.s64 	%rd112, %rd111, %rd61;
+	add.s64 	%rd203, %rd45, %rd112;
+	mul.lo.s64 	%rd113, %rd109, %rd6;
+	shl.b64 	%rd114, %rd113, 1;
+	add.s64 	%rd115, %rd114, %rd61;
+	add.s64 	%rd202, %rd44, %rd115;
+	add.s32 	%r139, %r136, 8192;
+	add.s32 	%r138, %r136, 16384;
+	mov.f32 	%f1147, 0f3F800000;
+	mov.f32 	%f237, 0f00000000;
+	mov.f32 	%f1039, 0fFF800000;
+	mov.b32 	%r1142, 1;
+	mov.b32 	%r1141, 0;
+	shl.b32 	%r486, %r27, 1;
+	shl.b32 	%r487, %r28, 1;
+	shl.b32 	%r488, %r29, 1;
+	shl.b32 	%r489, %r30, 1;
+	shl.b32 	%r506, %r31, 1;
+	shl.b32 	%r507, %r32, 1;
+	shl.b32 	%r508, %r33, 1;
+	shl.b32 	%r509, %r34, 1;
+	mov.u32 	%r1139, %r138;
+	mov.u32 	%r1140, %r139;
+	mov.f32 	%f1040, %f1039;
+	mov.f32 	%f1111, %f237;
+	mov.f32 	%f1112, %f237;
+	mov.f32 	%f1113, %f237;
+	mov.f32 	%f1114, %f237;
+	mov.f32 	%f1115, %f237;
+	mov.f32 	%f1116, %f237;
+	mov.f32 	%f1117, %f237;
+	mov.f32 	%f1118, %f237;
+	mov.f32 	%f1119, %f237;
+	mov.f32 	%f1120, %f237;
+	mov.f32 	%f1121, %f237;
+	mov.f32 	%f1122, %f237;
+	mov.f32 	%f1123, %f237;
+	mov.f32 	%f1124, %f237;
+	mov.f32 	%f1125, %f237;
+	mov.f32 	%f1126, %f237;
+	mov.f32 	%f1127, %f237;
+	mov.f32 	%f1128, %f237;
+	mov.f32 	%f1129, %f237;
+	mov.f32 	%f1130, %f237;
+	mov.f32 	%f1131, %f237;
+	mov.f32 	%f1132, %f237;
+	mov.f32 	%f1133, %f237;
+	mov.f32 	%f1134, %f237;
+	mov.f32 	%f1135, %f237;
+	mov.f32 	%f1136, %f237;
+	mov.f32 	%f1137, %f237;
+	mov.f32 	%f1138, %f237;
+	mov.f32 	%f1139, %f237;
+	mov.f32 	%f1140, %f237;
+	mov.f32 	%f1141, %f237;
+	mov.f32 	%f1142, %f237;
+	mov.f32 	%f1148, %f1147;
+	mov.u32 	%r1143, %r1141;
+$L__BB0_2:                              // %__nv_exp2f.exit123
+                                        // =>This Inner Loop Header: Depth=1
+	setp.lt.s32 	%p4, %r1143, %r22;
+$L__tmp2:
+	.loc	1 164 16                        // attention_precision.py:164:16
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.shared.b16 {%r246, %r247, %r248, %r249}, [%r190];
+	// end inline asm
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.shared.b16 {%r270, %r271, %r272, %r273}, [%r195];
+	// end inline asm
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.shared.b16 {%r294, %r295, %r296, %r297}, [%r200];
+	// end inline asm
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.shared.b16 {%r318, %r319, %r320, %r321}, [%r205];
+	// end inline asm
+$L__tmp3:
+	.loc	1 48 20                         // attention_precision.py:48:20
+	add.s32 	%r210, %r1140, %r486;
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.shared.b16 {%r206, %r207, %r208, %r209}, [%r210];
+	// end inline asm
+	add.s32 	%r215, %r1140, %r487;
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.shared.b16 {%r211, %r212, %r213, %r214}, [%r215];
+	// end inline asm
+	add.s32 	%r220, %r1140, %r488;
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.shared.b16 {%r216, %r217, %r218, %r219}, [%r220];
+	// end inline asm
+	add.s32 	%r225, %r1140, %r489;
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.shared.b16 {%r221, %r222, %r223, %r224}, [%r225];
+	// end inline asm
+	add.s32 	%r230, %r210, 2048;
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.shared.b16 {%r226, %r227, %r228, %r229}, [%r230];
+	// end inline asm
+	add.s32 	%r235, %r215, 2048;
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.shared.b16 {%r231, %r232, %r233, %r234}, [%r235];
+	// end inline asm
+	add.s32 	%r240, %r220, 2048;
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.shared.b16 {%r236, %r237, %r238, %r239}, [%r240];
+	// end inline asm
+	add.s32 	%r245, %r225, 2048;
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.shared.b16 {%r241, %r242, %r243, %r244}, [%r245];
+	// end inline asm
+	.loc	1 49 23                         // attention_precision.py:49:23
+	mov.f32 	%f265, %f237;
+	mov.f32 	%f266, %f237;
+	mov.f32 	%f267, %f237;
+	mov.f32 	%f268, %f237;
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f265, %f266, %f267, %f268 }, { %r246, %r247, %r248, %r249 }, { %r206, %r207 }, { %f265, %f266, %f267, %f268 };
+	// end inline asm
+	mov.f32 	%f273, %f237;
+	mov.f32 	%f274, %f237;
+	mov.f32 	%f275, %f237;
+	mov.f32 	%f276, %f237;
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f273, %f274, %f275, %f276 }, { %r246, %r247, %r248, %r249 }, { %r208, %r209 }, { %f273, %f274, %f275, %f276 };
+	// end inline asm
+	mov.f32 	%f281, %f237;
+	mov.f32 	%f282, %f237;
+	mov.f32 	%f283, %f237;
+	mov.f32 	%f284, %f237;
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f281, %f282, %f283, %f284 }, { %r246, %r247, %r248, %r249 }, { %r226, %r227 }, { %f281, %f282, %f283, %f284 };
+	// end inline asm
+	mov.f32 	%f292, %f237;
+	mov.f32 	%f289, %f237;
+	mov.f32 	%f290, %f237;
+	mov.f32 	%f291, %f237;
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f289, %f290, %f291, %f292 }, { %r246, %r247, %r248, %r249 }, { %r228, %r229 }, { %f289, %f290, %f291, %f292 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f265, %f266, %f267, %f268 }, { %r270, %r271, %r272, %r273 }, { %r211, %r212 }, { %f265, %f266, %f267, %f268 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f273, %f274, %f275, %f276 }, { %r270, %r271, %r272, %r273 }, { %r213, %r214 }, { %f273, %f274, %f275, %f276 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f281, %f282, %f283, %f284 }, { %r270, %r271, %r272, %r273 }, { %r231, %r232 }, { %f281, %f282, %f283, %f284 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f289, %f290, %f291, %f292 }, { %r270, %r271, %r272, %r273 }, { %r233, %r234 }, { %f289, %f290, %f291, %f292 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f265, %f266, %f267, %f268 }, { %r294, %r295, %r296, %r297 }, { %r216, %r217 }, { %f265, %f266, %f267, %f268 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f273, %f274, %f275, %f276 }, { %r294, %r295, %r296, %r297 }, { %r218, %r219 }, { %f273, %f274, %f275, %f276 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f281, %f282, %f283, %f284 }, { %r294, %r295, %r296, %r297 }, { %r236, %r237 }, { %f281, %f282, %f283, %f284 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f289, %f290, %f291, %f292 }, { %r294, %r295, %r296, %r297 }, { %r238, %r239 }, { %f289, %f290, %f291, %f292 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f265, %f266, %f267, %f268 }, { %r318, %r319, %r320, %r321 }, { %r221, %r222 }, { %f265, %f266, %f267, %f268 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f273, %f274, %f275, %f276 }, { %r318, %r319, %r320, %r321 }, { %r223, %r224 }, { %f273, %f274, %f275, %f276 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f281, %f282, %f283, %f284 }, { %r318, %r319, %r320, %r321 }, { %r241, %r242 }, { %f281, %f282, %f283, %f284 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f289, %f290, %f291, %f292 }, { %r318, %r319, %r320, %r321 }, { %r243, %r244 }, { %f289, %f290, %f291, %f292 };
+	// end inline asm
+	.loc	2 163 27                        // standard.py:163:27
+	max.f32 	%f489, %f265, %f266;
+	max.f32 	%f490, %f267, %f268;
+	max.f32 	%f491, %f489, %f273;
+	max.f32 	%f492, %f491, %f274;
+	max.f32 	%f493, %f490, %f275;
+	max.f32 	%f494, %f493, %f276;
+	max.f32 	%f495, %f492, %f281;
+	max.f32 	%f496, %f495, %f282;
+	max.f32 	%f497, %f494, %f283;
+	max.f32 	%f498, %f497, %f284;
+	max.f32 	%f499, %f496, %f289;
+	max.f32 	%f500, %f499, %f290;
+	max.f32 	%f501, %f498, %f291;
+	max.f32 	%f502, %f501, %f292;
+	.loc	2 184 40                        // standard.py:184:40
+	mov.b32 	%r490, %f500;
+	shfl.sync.bfly.b32	%r491, %r490, 2, 31, -1;
+	mov.b32 	%f503, %r491;
+	.loc	2 163 27                        // standard.py:163:27
+	max.f32 	%f504, %f500, %f503;
+	.loc	2 184 40                        // standard.py:184:40
+	mov.b32 	%r492, %f504;
+	shfl.sync.bfly.b32	%r493, %r492, 1, 31, -1;
+	mov.b32 	%f505, %r493;
+	.loc	2 163 27                        // standard.py:163:27
+	max.f32 	%f506, %f504, %f505;
+	.loc	2 184 40                        // standard.py:184:40
+	mov.b32 	%r494, %f502;
+	shfl.sync.bfly.b32	%r495, %r494, 2, 31, -1;
+	mov.b32 	%f507, %r495;
+	.loc	2 163 27                        // standard.py:163:27
+	max.f32 	%f508, %f502, %f507;
+	.loc	2 184 40                        // standard.py:184:40
+	mov.b32 	%r496, %f508;
+	shfl.sync.bfly.b32	%r497, %r496, 1, 31, -1;
+	mov.b32 	%f509, %r497;
+	.loc	2 163 27                        // standard.py:163:27
+	max.f32 	%f510, %f508, %f509;
+	.loc	1 56 51                         // attention_precision.py:56:51
+	mul.f32 	%f511, %f1, %f506;
+	mul.f32 	%f512, %f1, %f510;
+	.loc	1 56 35                         // attention_precision.py:56:35
+	max.f32 	%f1181, %f1039, %f511;
+	max.f32 	%f1182, %f1040, %f512;
+	.loc	1 57 33                         // attention_precision.py:57:33
+	neg.f32 	%f513, %f1181;
+	fma.rn.f32 	%f514, %f1, %f265, %f513;
+	fma.rn.f32 	%f515, %f1, %f266, %f513;
+	neg.f32 	%f516, %f1182;
+	fma.rn.f32 	%f517, %f1, %f267, %f516;
+	fma.rn.f32 	%f518, %f1, %f268, %f516;
+	fma.rn.f32 	%f519, %f1, %f273, %f513;
+	fma.rn.f32 	%f520, %f1, %f274, %f513;
+	fma.rn.f32 	%f521, %f1, %f275, %f516;
+	fma.rn.f32 	%f522, %f1, %f276, %f516;
+	fma.rn.f32 	%f523, %f1, %f281, %f513;
+	fma.rn.f32 	%f524, %f1, %f282, %f513;
+	fma.rn.f32 	%f525, %f1, %f283, %f516;
+	fma.rn.f32 	%f526, %f1, %f284, %f516;
+	fma.rn.f32 	%f527, %f1, %f289, %f513;
+	fma.rn.f32 	%f528, %f1, %f290, %f513;
+	fma.rn.f32 	%f529, %f1, %f291, %f516;
+	fma.rn.f32 	%f530, %f1, %f292, %f516;
+	.loc	1 58 25                         // attention_precision.py:58:25
+	ex2.approx.ftz.f32 	%f531, %f514;
+	ex2.approx.ftz.f32 	%f532, %f515;
+	ex2.approx.ftz.f32 	%f533, %f517;
+	ex2.approx.ftz.f32 	%f534, %f518;
+	ex2.approx.ftz.f32 	%f535, %f519;
+	ex2.approx.ftz.f32 	%f536, %f520;
+	ex2.approx.ftz.f32 	%f537, %f521;
+	ex2.approx.ftz.f32 	%f538, %f522;
+	ex2.approx.ftz.f32 	%f539, %f523;
+	ex2.approx.ftz.f32 	%f540, %f524;
+	ex2.approx.ftz.f32 	%f541, %f525;
+	ex2.approx.ftz.f32 	%f542, %f526;
+	ex2.approx.ftz.f32 	%f543, %f527;
+	ex2.approx.ftz.f32 	%f544, %f528;
+	ex2.approx.ftz.f32 	%f545, %f529;
+	ex2.approx.ftz.f32 	%f546, %f530;
+	.loc	2 256 15                        // standard.py:256:15
+	add.f32 	%f547, %f531, %f532;
+	add.f32 	%f548, %f533, %f534;
+	add.f32 	%f549, %f547, %f535;
+	add.f32 	%f550, %f549, %f536;
+	add.f32 	%f551, %f548, %f537;
+	add.f32 	%f552, %f551, %f538;
+	add.f32 	%f553, %f550, %f539;
+	add.f32 	%f554, %f553, %f540;
+	add.f32 	%f555, %f552, %f541;
+	add.f32 	%f556, %f555, %f542;
+	add.f32 	%f557, %f554, %f543;
+	add.f32 	%f558, %f557, %f544;
+	add.f32 	%f559, %f556, %f545;
+	add.f32 	%f560, %f559, %f546;
+	.loc	2 267 36                        // standard.py:267:36
+	mov.b32 	%r498, %f558;
+	shfl.sync.bfly.b32	%r499, %r498, 2, 31, -1;
+	mov.b32 	%f561, %r499;
+	.loc	2 256 15                        // standard.py:256:15
+	add.f32 	%f562, %f558, %f561;
+	.loc	2 267 36                        // standard.py:267:36
+	mov.b32 	%r500, %f562;
+	shfl.sync.bfly.b32	%r501, %r500, 1, 31, -1;
+	mov.b32 	%f563, %r501;
+	.loc	2 256 15                        // standard.py:256:15
+	add.f32 	%f564, %f562, %f563;
+	.loc	2 267 36                        // standard.py:267:36
+	mov.b32 	%r502, %f560;
+	shfl.sync.bfly.b32	%r503, %r502, 2, 31, -1;
+	mov.b32 	%f565, %r503;
+	.loc	2 256 15                        // standard.py:256:15
+	add.f32 	%f566, %f560, %f565;
+	.loc	2 267 36                        // standard.py:267:36
+	mov.b32 	%r504, %f566;
+	shfl.sync.bfly.b32	%r505, %r504, 1, 31, -1;
+	mov.b32 	%f567, %r505;
+	.loc	2 256 15                        // standard.py:256:15
+	add.f32 	%f568, %f566, %f567;
+	.loc	1 61 35                         // attention_precision.py:61:35
+	sub.f32 	%f569, %f1039, %f1181;
+	sub.f32 	%f570, %f1040, %f1182;
+	.loc	1 61 29                         // attention_precision.py:61:29
+	ex2.approx.ftz.f32 	%f571, %f569;
+	ex2.approx.ftz.f32 	%f572, %f570;
+	.loc	1 62 28                         // attention_precision.py:62:28
+	fma.rn.f32 	%f1147, %f1147, %f571, %f564;
+	fma.rn.f32 	%f1148, %f1148, %f572, %f568;
+	.loc	1 64 20                         // attention_precision.py:64:20
+	mul.f32 	%f1111, %f1111, %f571;
+	mul.f32 	%f1112, %f1112, %f571;
+	mul.f32 	%f1113, %f1113, %f572;
+	mul.f32 	%f1114, %f1114, %f572;
+	mul.f32 	%f1115, %f1115, %f571;
+	mul.f32 	%f1116, %f1116, %f571;
+	mul.f32 	%f1117, %f1117, %f572;
+	mul.f32 	%f1118, %f1118, %f572;
+	mul.f32 	%f1119, %f1119, %f571;
+	mul.f32 	%f1120, %f1120, %f571;
+	mul.f32 	%f1121, %f1121, %f572;
+	mul.f32 	%f1122, %f1122, %f572;
+	mul.f32 	%f1123, %f1123, %f571;
+	mul.f32 	%f1124, %f1124, %f571;
+	mul.f32 	%f1125, %f1125, %f572;
+	mul.f32 	%f1126, %f1126, %f572;
+	mul.f32 	%f1127, %f1127, %f571;
+	mul.f32 	%f1128, %f1128, %f571;
+	mul.f32 	%f1129, %f1129, %f572;
+	mul.f32 	%f1130, %f1130, %f572;
+	mul.f32 	%f1131, %f1131, %f571;
+	mul.f32 	%f1132, %f1132, %f571;
+	mul.f32 	%f1133, %f1133, %f572;
+	mul.f32 	%f1134, %f1134, %f572;
+	mul.f32 	%f1135, %f1135, %f571;
+	mul.f32 	%f1136, %f1136, %f571;
+	mul.f32 	%f1137, %f1137, %f572;
+	mul.f32 	%f1138, %f1138, %f572;
+	mul.f32 	%f1139, %f1139, %f571;
+	mul.f32 	%f1140, %f1140, %f571;
+	mul.f32 	%f1141, %f1141, %f572;
+	mul.f32 	%f1142, %f1142, %f572;
+	.loc	1 66 20                         // attention_precision.py:66:20
+	add.s32 	%r346, %r1139, %r506;
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.trans.shared.b16 {%r342, %r343, %r344, %r345}, [%r346];
+	// end inline asm
+	add.s32 	%r351, %r346, 2048;
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.trans.shared.b16 {%r347, %r348, %r349, %r350}, [%r351];
+	// end inline asm
+	add.s32 	%r356, %r1139, %r507;
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.trans.shared.b16 {%r352, %r353, %r354, %r355}, [%r356];
+	// end inline asm
+	add.s32 	%r361, %r356, 2048;
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.trans.shared.b16 {%r357, %r358, %r359, %r360}, [%r361];
+	// end inline asm
+	add.s32 	%r366, %r1139, %r508;
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.trans.shared.b16 {%r362, %r363, %r364, %r365}, [%r366];
+	// end inline asm
+	add.s32 	%r371, %r366, 2048;
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.trans.shared.b16 {%r367, %r368, %r369, %r370}, [%r371];
+	// end inline asm
+	add.s32 	%r376, %r1139, %r509;
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.trans.shared.b16 {%r372, %r373, %r374, %r375}, [%r376];
+	// end inline asm
+	add.s32 	%r381, %r376, 2048;
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.trans.shared.b16 {%r377, %r378, %r379, %r380}, [%r381];
+	// end inline asm
+	.loc	1 71 21                         // attention_precision.py:71:21
+	cvt.rn.f16.f32 	%rs1, %f532;
+	cvt.rn.f16.f32 	%rs2, %f531;
+	mov.b32 	%r382, {%rs2, %rs1};
+	cvt.rn.f16.f32 	%rs3, %f534;
+	cvt.rn.f16.f32 	%rs4, %f533;
+	mov.b32 	%r383, {%rs4, %rs3};
+	cvt.rn.f16.f32 	%rs5, %f536;
+	cvt.rn.f16.f32 	%rs6, %f535;
+	mov.b32 	%r384, {%rs6, %rs5};
+	cvt.rn.f16.f32 	%rs7, %f538;
+	cvt.rn.f16.f32 	%rs8, %f537;
+	mov.b32 	%r385, {%rs8, %rs7};
+	cvt.rn.f16.f32 	%rs9, %f540;
+	cvt.rn.f16.f32 	%rs10, %f539;
+	mov.b32 	%r430, {%rs10, %rs9};
+	cvt.rn.f16.f32 	%rs11, %f542;
+	cvt.rn.f16.f32 	%rs12, %f541;
+	mov.b32 	%r431, {%rs12, %rs11};
+	cvt.rn.f16.f32 	%rs13, %f544;
+	cvt.rn.f16.f32 	%rs14, %f543;
+	mov.b32 	%r432, {%rs14, %rs13};
+	cvt.rn.f16.f32 	%rs15, %f546;
+	cvt.rn.f16.f32 	%rs16, %f545;
+	mov.b32 	%r433, {%rs16, %rs15};
+	.loc	1 72 27                         // attention_precision.py:72:27
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f1111, %f1112, %f1113, %f1114 }, { %r382, %r383, %r384, %r385 }, { %r342, %r343 }, { %f1111, %f1112, %f1113, %f1114 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f1115, %f1116, %f1117, %f1118 }, { %r382, %r383, %r384, %r385 }, { %r344, %r345 }, { %f1115, %f1116, %f1117, %f1118 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f1119, %f1120, %f1121, %f1122 }, { %r382, %r383, %r384, %r385 }, { %r352, %r353 }, { %f1119, %f1120, %f1121, %f1122 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f1123, %f1124, %f1125, %f1126 }, { %r382, %r383, %r384, %r385 }, { %r354, %r355 }, { %f1123, %f1124, %f1125, %f1126 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f1127, %f1128, %f1129, %f1130 }, { %r382, %r383, %r384, %r385 }, { %r362, %r363 }, { %f1127, %f1128, %f1129, %f1130 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f1131, %f1132, %f1133, %f1134 }, { %r382, %r383, %r384, %r385 }, { %r364, %r365 }, { %f1131, %f1132, %f1133, %f1134 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f1135, %f1136, %f1137, %f1138 }, { %r382, %r383, %r384, %r385 }, { %r372, %r373 }, { %f1135, %f1136, %f1137, %f1138 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f1139, %f1140, %f1141, %f1142 }, { %r382, %r383, %r384, %r385 }, { %r374, %r375 }, { %f1139, %f1140, %f1141, %f1142 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f1111, %f1112, %f1113, %f1114 }, { %r430, %r431, %r432, %r433 }, { %r347, %r348 }, { %f1111, %f1112, %f1113, %f1114 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f1115, %f1116, %f1117, %f1118 }, { %r430, %r431, %r432, %r433 }, { %r349, %r350 }, { %f1115, %f1116, %f1117, %f1118 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f1119, %f1120, %f1121, %f1122 }, { %r430, %r431, %r432, %r433 }, { %r357, %r358 }, { %f1119, %f1120, %f1121, %f1122 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f1123, %f1124, %f1125, %f1126 }, { %r430, %r431, %r432, %r433 }, { %r359, %r360 }, { %f1123, %f1124, %f1125, %f1126 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f1127, %f1128, %f1129, %f1130 }, { %r430, %r431, %r432, %r433 }, { %r367, %r368 }, { %f1127, %f1128, %f1129, %f1130 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f1131, %f1132, %f1133, %f1134 }, { %r430, %r431, %r432, %r433 }, { %r369, %r370 }, { %f1131, %f1132, %f1133, %f1134 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f1135, %f1136, %f1137, %f1138 }, { %r430, %r431, %r432, %r433 }, { %r377, %r378 }, { %f1135, %f1136, %f1137, %f1138 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f1139, %f1140, %f1141, %f1142 }, { %r430, %r431, %r432, %r433 }, { %r379, %r380 }, { %f1139, %f1140, %f1141, %f1142 };
+	// end inline asm
+	.loc	1 45 33                         // attention_precision.py:45:33
+	add.s32 	%r518, %r1142, 1;
+	setp.lt.s32 	%p5, %r518, 2;
+	selp.b32 	%r1142, %r518, 0, %p5;
+	.loc	1 48 20                         // attention_precision.py:48:20
+	add.s64 	%rd116, %rd202, %rd14;
+	add.s64 	%rd117, %rd204, %rd14;
+	shl.b32 	%r519, %r1142, 12;
+	add.s32 	%r522, %r139, %r519;
+	bar.sync 	0;
+	add.s32 	%r478, %r522, %r135;
+	add.s32 	%r480, %r478, 2048;
+	selp.b32 	%r479, 16, 0, %p4;
+	// begin inline asm
+	cp.async.cg.shared.global [ %r478 + 0 ], [ %rd116 + 0 ], 0x10, %r479;
+	// end inline asm
+	// begin inline asm
+	cp.async.cg.shared.global [ %r480 + 0 ], [ %rd117 + 0 ], 0x10, %r479;
+	// end inline asm
+	// begin inline asm
+	cp.async.commit_group ;
+	// end inline asm
+	.loc	1 66 20                         // attention_precision.py:66:20
+	add.s64 	%rd118, %rd203, %rd14;
+	add.s64 	%rd119, %rd205, %rd14;
+	add.s32 	%r525, %r138, %r519;
+	add.s32 	%r482, %r525, %r135;
+	add.s32 	%r484, %r482, 2048;
+	// begin inline asm
+	cp.async.cg.shared.global [ %r482 + 0 ], [ %rd118 + 0 ], 0x10, %r479;
+	// end inline asm
+	// begin inline asm
+	cp.async.cg.shared.global [ %r484 + 0 ], [ %rd119 + 0 ], 0x10, %r479;
+	// end inline asm
+	// begin inline asm
+	cp.async.commit_group ;
+	// end inline asm
+	.loc	1 45 33                         // attention_precision.py:45:33
+	add.s32 	%r526, %r1141, 1;
+	setp.lt.s32 	%p6, %r526, 2;
+	selp.b32 	%r1141, %r526, 0, %p6;
+	.loc	1 48 20                         // attention_precision.py:48:20
+	shl.b32 	%r527, %r1141, 12;
+	add.s32 	%r1140, %r139, %r527;
+	// begin inline asm
+	cp.async.wait_group 0x2;
+	// end inline asm
+	bar.sync 	0;
+	.loc	1 66 20                         // attention_precision.py:66:20
+	add.s32 	%r1139, %r138, %r527;
+	.loc	1 45 33                         // attention_precision.py:45:33
+	add.s32 	%r1143, %r1143, 32;
+	add.s64 	%rd205, %rd205, %rd200;
+	add.s64 	%rd204, %rd204, %rd201;
+	add.s64 	%rd203, %rd203, %rd200;
+	add.s64 	%rd202, %rd202, %rd201;
+	setp.lt.s32 	%p7, %r1143, %r2;
+	mov.f32 	%f1039, %f1181;
+	mov.f32 	%f1040, %f1182;
+	@%p7 bra 	$L__BB0_2;
+$L__tmp4:
+$L__BB0_3:                              // %._crit_edge
+	.loc	1 0 0                           // attention_precision.py:0:0
+	or.b32  	%r10, %r115, %r113;
+$L__tmp5:
+	.loc	1 45 33                         // attention_precision.py:45:33
+	// begin inline asm
+	cp.async.wait_group 0x0;
+	// end inline asm
+	bar.sync 	0;
+$L__tmp6:
+	.loc	1 37 52                         // attention_precision.py:37:52
+	add.s32 	%r45, %r2, 64;
+	.loc	1 51 56                         // attention_precision.py:51:56
+	shl.b32 	%r544, %r3, 1;
+	and.b32  	%r46, %r544, 6;
+	.loc	1 45 33                         // attention_precision.py:45:33
+	setp.eq.s32 	%p8, %r2, 2147483584;
+	.loc	1 48 20                         // attention_precision.py:48:20
+	mul.lo.s64 	%rd128, %rd10, %rd6;
+	mul.lo.s64 	%rd129, %rd11, %rd6;
+	shl.b64 	%rd130, %rd128, 1;
+	add.s64 	%rd131, %rd5, %rd130;
+	shl.b64 	%rd132, %rd9, 1;
+	add.s64 	%rd120, %rd131, %rd132;
+	shl.b64 	%rd133, %rd129, 1;
+	add.s64 	%rd134, %rd5, %rd133;
+	add.s64 	%rd121, %rd134, %rd132;
+	selp.b32 	%r529, 0, 16, %p8;
+	// begin inline asm
+	cp.async.cg.shared.global [ %r89 + 0 ], [ %rd120 + 0 ], 0x10, %r529;
+	// end inline asm
+	// begin inline asm
+	cp.async.cg.shared.global [ %r91 + 0 ], [ %rd121 + 0 ], 0x10, %r529;
+	// end inline asm
+	// begin inline asm
+	cp.async.commit_group ;
+	// end inline asm
+	.loc	1 66 20                         // attention_precision.py:66:20
+	mul.lo.s64 	%rd135, %rd10, %rd4;
+	mul.lo.s64 	%rd136, %rd11, %rd4;
+	shl.b64 	%rd137, %rd135, 1;
+	add.s64 	%rd138, %rd3, %rd137;
+	add.s64 	%rd122, %rd138, %rd132;
+	shl.b64 	%rd139, %rd136, 1;
+	add.s64 	%rd140, %rd3, %rd139;
+	add.s64 	%rd123, %rd140, %rd132;
+	// begin inline asm
+	cp.async.cg.shared.global [ %r93 + 0 ], [ %rd122 + 0 ], 0x10, %r529;
+	// end inline asm
+	// begin inline asm
+	cp.async.cg.shared.global [ %r95 + 0 ], [ %rd123 + 0 ], 0x10, %r529;
+	// end inline asm
+	// begin inline asm
+	cp.async.commit_group ;
+	// end inline asm
+	.loc	1 45 33                         // attention_precision.py:45:33
+	or.b32  	%r545, %r2, 32;
+	setp.lt.s32 	%p9, %r545, %r45;
+	.loc	1 75 46                         // attention_precision.py:75:46
+	or.b64  	%rd141, %rd2, 32;
+	.loc	1 48 20                         // attention_precision.py:48:20
+	or.b64  	%rd142, %rd141, %rd7;
+	or.b64  	%rd143, %rd141, %rd8;
+	mul.lo.s64 	%rd144, %rd142, %rd6;
+	mul.lo.s64 	%rd145, %rd143, %rd6;
+	shl.b64 	%rd146, %rd144, 1;
+	add.s64 	%rd147, %rd5, %rd146;
+	add.s64 	%rd124, %rd147, %rd132;
+	shl.b64 	%rd148, %rd145, 1;
+	add.s64 	%rd149, %rd5, %rd148;
+	add.s64 	%rd125, %rd149, %rd132;
+	bar.sync 	0;
+	selp.b32 	%r537, 16, 0, %p9;
+	// begin inline asm
+	cp.async.cg.shared.global [ %r97 + 0 ], [ %rd124 + 0 ], 0x10, %r537;
+	// end inline asm
+	// begin inline asm
+	cp.async.cg.shared.global [ %r99 + 0 ], [ %rd125 + 0 ], 0x10, %r537;
+	// end inline asm
+	// begin inline asm
+	cp.async.commit_group ;
+	// end inline asm
+	.loc	1 66 20                         // attention_precision.py:66:20
+	mul.lo.s64 	%rd150, %rd142, %rd4;
+	mul.lo.s64 	%rd151, %rd143, %rd4;
+	shl.b64 	%rd152, %rd150, 1;
+	add.s64 	%rd153, %rd3, %rd152;
+	add.s64 	%rd126, %rd153, %rd132;
+	shl.b64 	%rd154, %rd151, 1;
+	add.s64 	%rd155, %rd3, %rd154;
+	add.s64 	%rd127, %rd155, %rd132;
+	// begin inline asm
+	cp.async.cg.shared.global [ %r101 + 0 ], [ %rd126 + 0 ], 0x10, %r537;
+	// end inline asm
+	// begin inline asm
+	cp.async.cg.shared.global [ %r103 + 0 ], [ %rd127 + 0 ], 0x10, %r537;
+	// end inline asm
+	// begin inline asm
+	cp.async.commit_group ;
+	// end inline asm
+	.loc	1 48 20                         // attention_precision.py:48:20
+	// begin inline asm
+	cp.async.wait_group 0x2;
+	// end inline asm
+	bar.sync 	0;
+	.loc	1 45 33                         // attention_precision.py:45:33
+	@%p8 bra 	$L__BB0_6;
+// %bb.4:                               // %.lr.ph261
+	.loc	1 0 33                          // attention_precision.py:0:33
+	or.b32  	%r11, %r2, %r10;
+	or.b32  	%r12, %r11, 8;
+	mov.b32 	%r1147, 1;
+	mov.b32 	%r1146, 0;
+	and.b32  	%r554, %r1135, 6;
+	or.b32  	%r555, %r554, %r1133;
+	xor.b32  	%r556, %r1134, %r1132;
+	shl.b32 	%r557, %r555, 9;
+	shl.b32 	%r558, %r1132, 6;
+	or.b32  	%r559, %r557, %r558;
+	shl.b32 	%r560, %r556, 3;
+	or.b32  	%r561, %r559, %r560;
+	shl.b32 	%r562, %r561, 1;
+	add.s32 	%r598, %r136, %r562;
+	or.b32  	%r564, %r1134, 2;
+	xor.b32  	%r565, %r564, %r1132;
+	shl.b32 	%r566, %r565, 3;
+	or.b32  	%r567, %r559, %r566;
+	shl.b32 	%r568, %r567, 1;
+	add.s32 	%r603, %r136, %r568;
+	or.b32  	%r569, %r1134, 4;
+	xor.b32  	%r570, %r569, %r1132;
+	shl.b32 	%r571, %r570, 3;
+	or.b32  	%r572, %r559, %r571;
+	shl.b32 	%r573, %r572, 1;
+	add.s32 	%r608, %r136, %r573;
+	or.b32  	%r574, %r1134, 6;
+	xor.b32  	%r575, %r574, %r1132;
+	shl.b32 	%r576, %r575, 3;
+	or.b32  	%r577, %r559, %r576;
+	shl.b32 	%r578, %r577, 1;
+	add.s32 	%r613, %r136, %r578;
+	or.b32  	%r579, %r1133, 2;
+	or.b32  	%r580, %r1133, 4;
+	or.b32  	%r581, %r1133, 6;
+	xor.b32  	%r582, %r1133, %r1132;
+	shl.b32 	%r583, %r1134, 9;
+	or.b32  	%r584, %r583, %r558;
+	shl.b32 	%r585, %r582, 3;
+	or.b32  	%r51, %r585, %r584;
+	xor.b32  	%r586, %r579, %r1132;
+	shl.b32 	%r587, %r586, 3;
+	or.b32  	%r52, %r587, %r584;
+	xor.b32  	%r588, %r580, %r1132;
+	shl.b32 	%r589, %r588, 3;
+	or.b32  	%r53, %r589, %r584;
+	xor.b32  	%r590, %r581, %r1132;
+	shl.b32 	%r591, %r590, 3;
+	or.b32  	%r54, %r591, %r584;
+	and.b32  	%r593, %r1136, 960;
+	or.b32  	%r55, %r560, %r593;
+	or.b32  	%r56, %r566, %r593;
+	or.b32  	%r57, %r571, %r593;
+	or.b32  	%r58, %r576, %r593;
+	.loc	1 45 33                         // attention_precision.py:45:33
+	mul.wide.u32 	%rd29, %r1132, 16;
+	add.s64 	%rd156, %rd2, %rd7;
+	add.s64 	%rd157, %rd156, 80;
+	mul.lo.s64 	%rd158, %rd157, %rd4;
+	shl.b64 	%rd159, %rd158, 1;
+	add.s64 	%rd161, %rd159, %rd61;
+	add.s64 	%rd209, %rd45, %rd161;
+	mul.lo.s64 	%rd162, %rd157, %rd6;
+	shl.b64 	%rd163, %rd162, 1;
+	add.s64 	%rd164, %rd163, %rd61;
+	add.s64 	%rd208, %rd44, %rd164;
+	add.s64 	%rd165, %rd156, 64;
+	mul.lo.s64 	%rd166, %rd165, %rd4;
+	shl.b64 	%rd167, %rd166, 1;
+	add.s64 	%rd168, %rd167, %rd61;
+	add.s64 	%rd207, %rd45, %rd168;
+	mul.lo.s64 	%rd169, %rd165, %rd6;
+	shl.b64 	%rd170, %rd169, 1;
+	add.s64 	%rd171, %rd170, %rd61;
+	add.s64 	%rd206, %rd44, %rd171;
+	add.s32 	%r547, %r136, 8192;
+	add.s32 	%r546, %r136, 16384;
+	shl.b32 	%r894, %r51, 1;
+	shl.b32 	%r895, %r52, 1;
+	shl.b32 	%r896, %r53, 1;
+	shl.b32 	%r897, %r54, 1;
+	shl.b32 	%r921, %r55, 1;
+	shl.b32 	%r922, %r56, 1;
+	shl.b32 	%r923, %r57, 1;
+	shl.b32 	%r924, %r58, 1;
+	mov.u32 	%r1144, %r546;
+	mov.u32 	%r1145, %r547;
+	mov.u32 	%r1148, %r2;
+	mov.f32 	%f1145, %f1181;
+	mov.f32 	%f1146, %f1182;
+$L__BB0_5:                              // %__nv_exp2f.exit
+                                        // =>This Inner Loop Header: Depth=1
+	setp.lt.s32 	%p10, %r1148, %r2;
+$L__tmp7:
+	.loc	1 164 16                        // attention_precision.py:164:16
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.shared.b16 {%r654, %r655, %r656, %r657}, [%r598];
+	// end inline asm
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.shared.b16 {%r678, %r679, %r680, %r681}, [%r603];
+	// end inline asm
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.shared.b16 {%r702, %r703, %r704, %r705}, [%r608];
+	// end inline asm
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.shared.b16 {%r726, %r727, %r728, %r729}, [%r613];
+	// end inline asm
+$L__tmp8:
+	.loc	1 48 20                         // attention_precision.py:48:20
+	add.s32 	%r618, %r1145, %r894;
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.shared.b16 {%r614, %r615, %r616, %r617}, [%r618];
+	// end inline asm
+	add.s32 	%r623, %r1145, %r895;
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.shared.b16 {%r619, %r620, %r621, %r622}, [%r623];
+	// end inline asm
+	add.s32 	%r628, %r1145, %r896;
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.shared.b16 {%r624, %r625, %r626, %r627}, [%r628];
+	// end inline asm
+	add.s32 	%r633, %r1145, %r897;
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.shared.b16 {%r629, %r630, %r631, %r632}, [%r633];
+	// end inline asm
+	add.s32 	%r638, %r618, 2048;
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.shared.b16 {%r634, %r635, %r636, %r637}, [%r638];
+	// end inline asm
+	add.s32 	%r643, %r623, 2048;
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.shared.b16 {%r639, %r640, %r641, %r642}, [%r643];
+	// end inline asm
+	add.s32 	%r648, %r628, 2048;
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.shared.b16 {%r644, %r645, %r646, %r647}, [%r648];
+	// end inline asm
+	add.s32 	%r653, %r633, 2048;
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.shared.b16 {%r649, %r650, %r651, %r652}, [%r653];
+	// end inline asm
+	mov.f32 	%f629, 0f00000000;
+	.loc	1 49 23                         // attention_precision.py:49:23
+	mov.f32 	%f605, %f629;
+	mov.f32 	%f606, %f629;
+	mov.f32 	%f607, %f629;
+	mov.f32 	%f608, %f629;
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f605, %f606, %f607, %f608 }, { %r654, %r655, %r656, %r657 }, { %r614, %r615 }, { %f605, %f606, %f607, %f608 };
+	// end inline asm
+	mov.f32 	%f613, %f629;
+	mov.f32 	%f614, %f629;
+	mov.f32 	%f615, %f629;
+	mov.f32 	%f616, %f629;
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f613, %f614, %f615, %f616 }, { %r654, %r655, %r656, %r657 }, { %r616, %r617 }, { %f613, %f614, %f615, %f616 };
+	// end inline asm
+	mov.f32 	%f621, %f629;
+	mov.f32 	%f622, %f629;
+	mov.f32 	%f623, %f629;
+	mov.f32 	%f624, %f629;
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f621, %f622, %f623, %f624 }, { %r654, %r655, %r656, %r657 }, { %r634, %r635 }, { %f621, %f622, %f623, %f624 };
+	// end inline asm
+	mov.f32 	%f630, %f629;
+	mov.f32 	%f631, %f629;
+	mov.f32 	%f632, %f629;
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f629, %f630, %f631, %f632 }, { %r654, %r655, %r656, %r657 }, { %r636, %r637 }, { %f629, %f630, %f631, %f632 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f605, %f606, %f607, %f608 }, { %r678, %r679, %r680, %r681 }, { %r619, %r620 }, { %f605, %f606, %f607, %f608 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f613, %f614, %f615, %f616 }, { %r678, %r679, %r680, %r681 }, { %r621, %r622 }, { %f613, %f614, %f615, %f616 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f621, %f622, %f623, %f624 }, { %r678, %r679, %r680, %r681 }, { %r639, %r640 }, { %f621, %f622, %f623, %f624 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f629, %f630, %f631, %f632 }, { %r678, %r679, %r680, %r681 }, { %r641, %r642 }, { %f629, %f630, %f631, %f632 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f605, %f606, %f607, %f608 }, { %r702, %r703, %r704, %r705 }, { %r624, %r625 }, { %f605, %f606, %f607, %f608 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f613, %f614, %f615, %f616 }, { %r702, %r703, %r704, %r705 }, { %r626, %r627 }, { %f613, %f614, %f615, %f616 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f621, %f622, %f623, %f624 }, { %r702, %r703, %r704, %r705 }, { %r644, %r645 }, { %f621, %f622, %f623, %f624 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f629, %f630, %f631, %f632 }, { %r702, %r703, %r704, %r705 }, { %r646, %r647 }, { %f629, %f630, %f631, %f632 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f605, %f606, %f607, %f608 }, { %r726, %r727, %r728, %r729 }, { %r629, %r630 }, { %f605, %f606, %f607, %f608 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f613, %f614, %f615, %f616 }, { %r726, %r727, %r728, %r729 }, { %r631, %r632 }, { %f613, %f614, %f615, %f616 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f621, %f622, %f623, %f624 }, { %r726, %r727, %r728, %r729 }, { %r649, %r650 }, { %f621, %f622, %f623, %f624 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f629, %f630, %f631, %f632 }, { %r726, %r727, %r728, %r729 }, { %r651, %r652 }, { %f629, %f630, %f631, %f632 };
+	// end inline asm
+	.loc	1 51 49                         // attention_precision.py:51:49
+	add.s32 	%r898, %r46, %r1148;
+	add.s32 	%r899, %r898, 8;
+	add.s32 	%r900, %r898, 9;
+	add.s32 	%r901, %r898, 16;
+	add.s32 	%r902, %r898, 17;
+	add.s32 	%r903, %r898, 24;
+	.loc	1 51 39                         // attention_precision.py:51:39
+	add.s32 	%r904, %r898, 25;
+	setp.lt.s32 	%p11, %r11, %r898;
+	setp.gt.s32 	%p12, %r11, %r898;
+	setp.lt.s32 	%p13, %r12, %r898;
+	setp.gt.s32 	%p14, %r12, %r898;
+	setp.lt.s32 	%p15, %r11, %r899;
+	setp.lt.s32 	%p16, %r11, %r900;
+	setp.lt.s32 	%p17, %r12, %r899;
+	setp.lt.s32 	%p18, %r12, %r900;
+	setp.lt.s32 	%p19, %r11, %r901;
+	setp.lt.s32 	%p20, %r11, %r902;
+	setp.lt.s32 	%p21, %r12, %r901;
+	setp.lt.s32 	%p22, %r12, %r902;
+	setp.lt.s32 	%p23, %r11, %r903;
+	setp.lt.s32 	%p24, %r11, %r904;
+	setp.lt.s32 	%p25, %r12, %r903;
+	setp.lt.s32 	%p26, %r12, %r904;
+	.loc	1 52 51                         // attention_precision.py:52:51
+	selp.f32 	%f829, 0fC9742400, 0f00000000, %p11;
+	selp.f32 	%f830, 0f00000000, 0fC9742400, %p12;
+	selp.f32 	%f831, 0fC9742400, 0f00000000, %p13;
+	selp.f32 	%f832, 0f00000000, 0fC9742400, %p14;
+	selp.f32 	%f833, 0fC9742400, 0f00000000, %p15;
+	selp.f32 	%f834, 0fC9742400, 0f00000000, %p16;
+	selp.f32 	%f835, 0fC9742400, 0f00000000, %p17;
+	selp.f32 	%f836, 0fC9742400, 0f00000000, %p18;
+	selp.f32 	%f837, 0fC9742400, 0f00000000, %p19;
+	selp.f32 	%f838, 0fC9742400, 0f00000000, %p20;
+	selp.f32 	%f839, 0fC9742400, 0f00000000, %p21;
+	selp.f32 	%f840, 0fC9742400, 0f00000000, %p22;
+	selp.f32 	%f841, 0fC9742400, 0f00000000, %p23;
+	selp.f32 	%f842, 0fC9742400, 0f00000000, %p24;
+	selp.f32 	%f843, 0fC9742400, 0f00000000, %p25;
+	selp.f32 	%f844, 0fC9742400, 0f00000000, %p26;
+	.loc	1 52 33                         // attention_precision.py:52:33
+	fma.rn.f32 	%f845, %f1, %f605, %f829;
+	fma.rn.f32 	%f846, %f1, %f606, %f830;
+	fma.rn.f32 	%f847, %f1, %f607, %f831;
+	fma.rn.f32 	%f848, %f1, %f608, %f832;
+	fma.rn.f32 	%f849, %f1, %f613, %f833;
+	fma.rn.f32 	%f850, %f1, %f614, %f834;
+	fma.rn.f32 	%f851, %f1, %f615, %f835;
+	fma.rn.f32 	%f852, %f1, %f616, %f836;
+	fma.rn.f32 	%f853, %f1, %f621, %f837;
+	fma.rn.f32 	%f854, %f1, %f622, %f838;
+	fma.rn.f32 	%f855, %f1, %f623, %f839;
+	fma.rn.f32 	%f856, %f1, %f624, %f840;
+	fma.rn.f32 	%f857, %f1, %f629, %f841;
+	fma.rn.f32 	%f858, %f1, %f630, %f842;
+	fma.rn.f32 	%f859, %f1, %f631, %f843;
+	fma.rn.f32 	%f860, %f1, %f632, %f844;
+	.loc	2 163 27                        // standard.py:163:27
+	max.f32 	%f861, %f845, %f846;
+	max.f32 	%f862, %f847, %f848;
+	max.f32 	%f863, %f861, %f849;
+	max.f32 	%f864, %f863, %f850;
+	max.f32 	%f865, %f862, %f851;
+	max.f32 	%f866, %f865, %f852;
+	max.f32 	%f867, %f864, %f853;
+	max.f32 	%f868, %f867, %f854;
+	max.f32 	%f869, %f866, %f855;
+	max.f32 	%f870, %f869, %f856;
+	max.f32 	%f871, %f868, %f857;
+	max.f32 	%f872, %f871, %f858;
+	max.f32 	%f873, %f870, %f859;
+	max.f32 	%f874, %f873, %f860;
+	.loc	2 184 40                        // standard.py:184:40
+	mov.b32 	%r905, %f872;
+	shfl.sync.bfly.b32	%r906, %r905, 2, 31, -1;
+	mov.b32 	%f875, %r906;
+	.loc	2 163 27                        // standard.py:163:27
+	max.f32 	%f876, %f872, %f875;
+	.loc	2 184 40                        // standard.py:184:40
+	mov.b32 	%r907, %f876;
+	shfl.sync.bfly.b32	%r908, %r907, 1, 31, -1;
+	mov.b32 	%f877, %r908;
+	.loc	2 163 27                        // standard.py:163:27
+	max.f32 	%f878, %f876, %f877;
+	.loc	2 184 40                        // standard.py:184:40
+	mov.b32 	%r909, %f874;
+	shfl.sync.bfly.b32	%r910, %r909, 2, 31, -1;
+	mov.b32 	%f879, %r910;
+	.loc	2 163 27                        // standard.py:163:27
+	max.f32 	%f880, %f874, %f879;
+	.loc	2 184 40                        // standard.py:184:40
+	mov.b32 	%r911, %f880;
+	shfl.sync.bfly.b32	%r912, %r911, 1, 31, -1;
+	mov.b32 	%f881, %r912;
+	.loc	2 163 27                        // standard.py:163:27
+	max.f32 	%f882, %f880, %f881;
+	.loc	1 53 35                         // attention_precision.py:53:35
+	max.f32 	%f1181, %f1145, %f878;
+	max.f32 	%f1182, %f1146, %f882;
+	.loc	1 54 18                         // attention_precision.py:54:18
+	sub.f32 	%f883, %f845, %f1181;
+	sub.f32 	%f884, %f846, %f1181;
+	sub.f32 	%f885, %f847, %f1182;
+	sub.f32 	%f886, %f848, %f1182;
+	sub.f32 	%f887, %f849, %f1181;
+	sub.f32 	%f888, %f850, %f1181;
+	sub.f32 	%f889, %f851, %f1182;
+	sub.f32 	%f890, %f852, %f1182;
+	sub.f32 	%f891, %f853, %f1181;
+	sub.f32 	%f892, %f854, %f1181;
+	sub.f32 	%f893, %f855, %f1182;
+	sub.f32 	%f894, %f856, %f1182;
+	sub.f32 	%f895, %f857, %f1181;
+	sub.f32 	%f896, %f858, %f1181;
+	sub.f32 	%f897, %f859, %f1182;
+	sub.f32 	%f898, %f860, %f1182;
+	.loc	1 58 25                         // attention_precision.py:58:25
+	ex2.approx.ftz.f32 	%f899, %f883;
+	ex2.approx.ftz.f32 	%f900, %f884;
+	ex2.approx.ftz.f32 	%f901, %f885;
+	ex2.approx.ftz.f32 	%f902, %f886;
+	ex2.approx.ftz.f32 	%f903, %f887;
+	ex2.approx.ftz.f32 	%f904, %f888;
+	ex2.approx.ftz.f32 	%f905, %f889;
+	ex2.approx.ftz.f32 	%f906, %f890;
+	ex2.approx.ftz.f32 	%f907, %f891;
+	ex2.approx.ftz.f32 	%f908, %f892;
+	ex2.approx.ftz.f32 	%f909, %f893;
+	ex2.approx.ftz.f32 	%f910, %f894;
+	ex2.approx.ftz.f32 	%f911, %f895;
+	ex2.approx.ftz.f32 	%f912, %f896;
+	ex2.approx.ftz.f32 	%f913, %f897;
+	ex2.approx.ftz.f32 	%f914, %f898;
+	.loc	2 256 15                        // standard.py:256:15
+	add.f32 	%f915, %f899, %f900;
+	add.f32 	%f916, %f901, %f902;
+	add.f32 	%f917, %f915, %f903;
+	add.f32 	%f918, %f917, %f904;
+	add.f32 	%f919, %f916, %f905;
+	add.f32 	%f920, %f919, %f906;
+	add.f32 	%f921, %f918, %f907;
+	add.f32 	%f922, %f921, %f908;
+	add.f32 	%f923, %f920, %f909;
+	add.f32 	%f924, %f923, %f910;
+	add.f32 	%f925, %f922, %f911;
+	add.f32 	%f926, %f925, %f912;
+	add.f32 	%f927, %f924, %f913;
+	add.f32 	%f928, %f927, %f914;
+	.loc	2 267 36                        // standard.py:267:36
+	mov.b32 	%r913, %f926;
+	shfl.sync.bfly.b32	%r914, %r913, 2, 31, -1;
+	mov.b32 	%f929, %r914;
+	.loc	2 256 15                        // standard.py:256:15
+	add.f32 	%f930, %f926, %f929;
+	.loc	2 267 36                        // standard.py:267:36
+	mov.b32 	%r915, %f930;
+	shfl.sync.bfly.b32	%r916, %r915, 1, 31, -1;
+	mov.b32 	%f931, %r916;
+	.loc	2 256 15                        // standard.py:256:15
+	add.f32 	%f932, %f930, %f931;
+	.loc	2 267 36                        // standard.py:267:36
+	mov.b32 	%r917, %f928;
+	shfl.sync.bfly.b32	%r918, %r917, 2, 31, -1;
+	mov.b32 	%f933, %r918;
+	.loc	2 256 15                        // standard.py:256:15
+	add.f32 	%f934, %f928, %f933;
+	.loc	2 267 36                        // standard.py:267:36
+	mov.b32 	%r919, %f934;
+	shfl.sync.bfly.b32	%r920, %r919, 1, 31, -1;
+	mov.b32 	%f935, %r920;
+	.loc	2 256 15                        // standard.py:256:15
+	add.f32 	%f936, %f934, %f935;
+	.loc	1 61 35                         // attention_precision.py:61:35
+	sub.f32 	%f937, %f1145, %f1181;
+	sub.f32 	%f938, %f1146, %f1182;
+	.loc	1 61 29                         // attention_precision.py:61:29
+	ex2.approx.ftz.f32 	%f939, %f937;
+	ex2.approx.ftz.f32 	%f940, %f938;
+	.loc	1 62 28                         // attention_precision.py:62:28
+	fma.rn.f32 	%f1147, %f1147, %f939, %f932;
+	fma.rn.f32 	%f1148, %f1148, %f940, %f936;
+	.loc	1 64 20                         // attention_precision.py:64:20
+	mul.f32 	%f1111, %f1111, %f939;
+	mul.f32 	%f1112, %f1112, %f939;
+	mul.f32 	%f1113, %f1113, %f940;
+	mul.f32 	%f1114, %f1114, %f940;
+	mul.f32 	%f1115, %f1115, %f939;
+	mul.f32 	%f1116, %f1116, %f939;
+	mul.f32 	%f1117, %f1117, %f940;
+	mul.f32 	%f1118, %f1118, %f940;
+	mul.f32 	%f1119, %f1119, %f939;
+	mul.f32 	%f1120, %f1120, %f939;
+	mul.f32 	%f1121, %f1121, %f940;
+	mul.f32 	%f1122, %f1122, %f940;
+	mul.f32 	%f1123, %f1123, %f939;
+	mul.f32 	%f1124, %f1124, %f939;
+	mul.f32 	%f1125, %f1125, %f940;
+	mul.f32 	%f1126, %f1126, %f940;
+	mul.f32 	%f1127, %f1127, %f939;
+	mul.f32 	%f1128, %f1128, %f939;
+	mul.f32 	%f1129, %f1129, %f940;
+	mul.f32 	%f1130, %f1130, %f940;
+	mul.f32 	%f1131, %f1131, %f939;
+	mul.f32 	%f1132, %f1132, %f939;
+	mul.f32 	%f1133, %f1133, %f940;
+	mul.f32 	%f1134, %f1134, %f940;
+	mul.f32 	%f1135, %f1135, %f939;
+	mul.f32 	%f1136, %f1136, %f939;
+	mul.f32 	%f1137, %f1137, %f940;
+	mul.f32 	%f1138, %f1138, %f940;
+	mul.f32 	%f1139, %f1139, %f939;
+	mul.f32 	%f1140, %f1140, %f939;
+	mul.f32 	%f1141, %f1141, %f940;
+	mul.f32 	%f1142, %f1142, %f940;
+	.loc	1 66 20                         // attention_precision.py:66:20
+	add.s32 	%r754, %r1144, %r921;
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.trans.shared.b16 {%r750, %r751, %r752, %r753}, [%r754];
+	// end inline asm
+	add.s32 	%r759, %r754, 2048;
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.trans.shared.b16 {%r755, %r756, %r757, %r758}, [%r759];
+	// end inline asm
+	add.s32 	%r764, %r1144, %r922;
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.trans.shared.b16 {%r760, %r761, %r762, %r763}, [%r764];
+	// end inline asm
+	add.s32 	%r769, %r764, 2048;
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.trans.shared.b16 {%r765, %r766, %r767, %r768}, [%r769];
+	// end inline asm
+	add.s32 	%r774, %r1144, %r923;
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.trans.shared.b16 {%r770, %r771, %r772, %r773}, [%r774];
+	// end inline asm
+	add.s32 	%r779, %r774, 2048;
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.trans.shared.b16 {%r775, %r776, %r777, %r778}, [%r779];
+	// end inline asm
+	add.s32 	%r784, %r1144, %r924;
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.trans.shared.b16 {%r780, %r781, %r782, %r783}, [%r784];
+	// end inline asm
+	add.s32 	%r789, %r784, 2048;
+	// begin inline asm
+	ldmatrix.sync.aligned.m8n8.x4.trans.shared.b16 {%r785, %r786, %r787, %r788}, [%r789];
+	// end inline asm
+	.loc	1 71 21                         // attention_precision.py:71:21
+	cvt.rn.f16.f32 	%rs17, %f900;
+	cvt.rn.f16.f32 	%rs18, %f899;
+	mov.b32 	%r790, {%rs18, %rs17};
+	cvt.rn.f16.f32 	%rs19, %f902;
+	cvt.rn.f16.f32 	%rs20, %f901;
+	mov.b32 	%r791, {%rs20, %rs19};
+	cvt.rn.f16.f32 	%rs21, %f904;
+	cvt.rn.f16.f32 	%rs22, %f903;
+	mov.b32 	%r792, {%rs22, %rs21};
+	cvt.rn.f16.f32 	%rs23, %f906;
+	cvt.rn.f16.f32 	%rs24, %f905;
+	mov.b32 	%r793, {%rs24, %rs23};
+	cvt.rn.f16.f32 	%rs25, %f908;
+	cvt.rn.f16.f32 	%rs26, %f907;
+	mov.b32 	%r838, {%rs26, %rs25};
+	cvt.rn.f16.f32 	%rs27, %f910;
+	cvt.rn.f16.f32 	%rs28, %f909;
+	mov.b32 	%r839, {%rs28, %rs27};
+	cvt.rn.f16.f32 	%rs29, %f912;
+	cvt.rn.f16.f32 	%rs30, %f911;
+	mov.b32 	%r840, {%rs30, %rs29};
+	cvt.rn.f16.f32 	%rs31, %f914;
+	cvt.rn.f16.f32 	%rs32, %f913;
+	mov.b32 	%r841, {%rs32, %rs31};
+	.loc	1 72 27                         // attention_precision.py:72:27
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f1111, %f1112, %f1113, %f1114 }, { %r790, %r791, %r792, %r793 }, { %r750, %r751 }, { %f1111, %f1112, %f1113, %f1114 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f1115, %f1116, %f1117, %f1118 }, { %r790, %r791, %r792, %r793 }, { %r752, %r753 }, { %f1115, %f1116, %f1117, %f1118 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f1119, %f1120, %f1121, %f1122 }, { %r790, %r791, %r792, %r793 }, { %r760, %r761 }, { %f1119, %f1120, %f1121, %f1122 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f1123, %f1124, %f1125, %f1126 }, { %r790, %r791, %r792, %r793 }, { %r762, %r763 }, { %f1123, %f1124, %f1125, %f1126 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f1127, %f1128, %f1129, %f1130 }, { %r790, %r791, %r792, %r793 }, { %r770, %r771 }, { %f1127, %f1128, %f1129, %f1130 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f1131, %f1132, %f1133, %f1134 }, { %r790, %r791, %r792, %r793 }, { %r772, %r773 }, { %f1131, %f1132, %f1133, %f1134 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f1135, %f1136, %f1137, %f1138 }, { %r790, %r791, %r792, %r793 }, { %r780, %r781 }, { %f1135, %f1136, %f1137, %f1138 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f1139, %f1140, %f1141, %f1142 }, { %r790, %r791, %r792, %r793 }, { %r782, %r783 }, { %f1139, %f1140, %f1141, %f1142 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f1111, %f1112, %f1113, %f1114 }, { %r838, %r839, %r840, %r841 }, { %r755, %r756 }, { %f1111, %f1112, %f1113, %f1114 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f1115, %f1116, %f1117, %f1118 }, { %r838, %r839, %r840, %r841 }, { %r757, %r758 }, { %f1115, %f1116, %f1117, %f1118 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f1119, %f1120, %f1121, %f1122 }, { %r838, %r839, %r840, %r841 }, { %r765, %r766 }, { %f1119, %f1120, %f1121, %f1122 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f1123, %f1124, %f1125, %f1126 }, { %r838, %r839, %r840, %r841 }, { %r767, %r768 }, { %f1123, %f1124, %f1125, %f1126 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f1127, %f1128, %f1129, %f1130 }, { %r838, %r839, %r840, %r841 }, { %r775, %r776 }, { %f1127, %f1128, %f1129, %f1130 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f1131, %f1132, %f1133, %f1134 }, { %r838, %r839, %r840, %r841 }, { %r777, %r778 }, { %f1131, %f1132, %f1133, %f1134 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f1135, %f1136, %f1137, %f1138 }, { %r838, %r839, %r840, %r841 }, { %r785, %r786 }, { %f1135, %f1136, %f1137, %f1138 };
+	// end inline asm
+	// begin inline asm
+	mma.sync.aligned.m16n8k16.row.col.f32.f16.f16.f32 { %f1139, %f1140, %f1141, %f1142 }, { %r838, %r839, %r840, %r841 }, { %r787, %r788 }, { %f1139, %f1140, %f1141, %f1142 };
+	// end inline asm
+	.loc	1 45 33                         // attention_precision.py:45:33
+	add.s32 	%r933, %r1147, 1;
+	setp.lt.s32 	%p27, %r933, 2;
+	selp.b32 	%r1147, %r933, 0, %p27;
+	.loc	1 48 20                         // attention_precision.py:48:20
+	add.s64 	%rd172, %rd206, %rd29;
+	add.s64 	%rd173, %rd208, %rd29;
+	shl.b32 	%r934, %r1147, 12;
+	add.s32 	%r937, %r547, %r934;
+	bar.sync 	0;
+	add.s32 	%r886, %r937, %r135;
+	add.s32 	%r888, %r886, 2048;
+	selp.b32 	%r887, 16, 0, %p10;
+	// begin inline asm
+	cp.async.cg.shared.global [ %r886 + 0 ], [ %rd172 + 0 ], 0x10, %r887;
+	// end inline asm
+	// begin inline asm
+	cp.async.cg.shared.global [ %r888 + 0 ], [ %rd173 + 0 ], 0x10, %r887;
+	// end inline asm
+	// begin inline asm
+	cp.async.commit_group ;
+	// end inline asm
+	.loc	1 66 20                         // attention_precision.py:66:20
+	add.s64 	%rd174, %rd207, %rd29;
+	add.s64 	%rd175, %rd209, %rd29;
+	add.s32 	%r940, %r546, %r934;
+	add.s32 	%r890, %r940, %r135;
+	add.s32 	%r892, %r890, 2048;
+	// begin inline asm
+	cp.async.cg.shared.global [ %r890 + 0 ], [ %rd174 + 0 ], 0x10, %r887;
+	// end inline asm
+	// begin inline asm
+	cp.async.cg.shared.global [ %r892 + 0 ], [ %rd175 + 0 ], 0x10, %r887;
+	// end inline asm
+	// begin inline asm
+	cp.async.commit_group ;
+	// end inline asm
+	.loc	1 45 33                         // attention_precision.py:45:33
+	add.s32 	%r941, %r1146, 1;
+	setp.lt.s32 	%p28, %r941, 2;
+	selp.b32 	%r1146, %r941, 0, %p28;
+	.loc	1 48 20                         // attention_precision.py:48:20
+	shl.b32 	%r942, %r1146, 12;
+	add.s32 	%r1145, %r547, %r942;
+	// begin inline asm
+	cp.async.wait_group 0x2;
+	// end inline asm
+	bar.sync 	0;
+	.loc	1 66 20                         // attention_precision.py:66:20
+	add.s32 	%r1144, %r546, %r942;
+	.loc	1 45 33                         // attention_precision.py:45:33
+	add.s32 	%r1148, %r1148, 32;
+	add.s64 	%rd209, %rd209, %rd200;
+	add.s64 	%rd208, %rd208, %rd201;
+	add.s64 	%rd207, %rd207, %rd200;
+	add.s64 	%rd206, %rd206, %rd201;
+	setp.lt.s32 	%p29, %r1148, %r45;
+	mov.f32 	%f1145, %f1181;
+	mov.f32 	%f1146, %f1182;
+	@%p29 bra 	$L__BB0_5;
+$L__BB0_6:                              // %._crit_edge262
+	// begin inline asm
+	cp.async.wait_group 0x0;
+	// end inline asm
+	bar.sync 	0;
+$L__tmp9:
+	.loc	1 209 24                        // attention_precision.py:209:24
+	setp.lt.f32 	%p30, %f1147, 0f00800000;
+	mul.f32 	%f941, %f1147, 0f4B000000;
+	selp.f32 	%f218, %f941, %f1147, %p30;
+	selp.f32 	%f942, 0fC1B80000, 0f00000000, %p30;
+	mov.b32 	%r943, %f218;
+	add.s32 	%r944, %r943, -1060439283;
+	and.b32  	%r945, %r944, -8388608;
+	sub.s32 	%r946, %r943, %r945;
+	mov.b32 	%f943, %r946;
+	cvt.rn.f32.s32 	%f944, %r945;
+	mov.f32 	%f945, 0f34000000;
+	fma.rn.ftz.f32 	%f946, %f944, %f945, %f942;
+	add.f32 	%f947, %f943, 0fBF800000;
+	mov.f32 	%f948, 0fBE2C7F30;
+	mov.f32 	%f949, 0f3DC6B27F;
+	fma.rn.ftz.f32 	%f950, %f949, %f947, %f948;
+	mov.f32 	%f951, 0f3E2FCF2A;
+	fma.rn.ftz.f32 	%f952, %f950, %f947, %f951;
+	mov.f32 	%f953, 0fBE374E43;
+	fma.rn.ftz.f32 	%f954, %f952, %f947, %f953;
+	mov.f32 	%f955, 0f3E520BF4;
+	fma.rn.ftz.f32 	%f956, %f954, %f947, %f955;
+	mov.f32 	%f957, 0fBE763C8B;
+	fma.rn.ftz.f32 	%f958, %f956, %f947, %f957;
+	mov.f32 	%f959, 0f3E93BF99;
+	fma.rn.ftz.f32 	%f960, %f958, %f947, %f959;
+	mov.f32 	%f961, 0fBEB8AA49;
+	fma.rn.ftz.f32 	%f962, %f960, %f947, %f961;
+	mov.f32 	%f963, 0f3EF6384A;
+	fma.rn.ftz.f32 	%f964, %f962, %f947, %f963;
+	mov.f32 	%f965, 0fBF38AA3B;
+	fma.rn.ftz.f32 	%f966, %f964, %f947, %f965;
+	mul.f32 	%f967, %f947, %f966;
+	mul.f32 	%f968, %f947, %f967;
+	mov.f32 	%f969, 0f3FB8AA3B;
+	fma.rn.ftz.f32 	%f970, %f947, %f969, %f968;
+	add.f32 	%f1183, %f946, %f970;
+	setp.lt.u32 	%p31, %r943, 2139095040;
+	mov.f32 	%f971, 0f7F800000;
+	@%p31 bra 	$L__BB0_8;
+// %bb.7:                               // %__nv_fmaf_rn.exit.i.i
+	.loc	1 0 24                          // attention_precision.py:0:24
+	fma.rn.ftz.f32 	%f1183, %f218, %f971, %f971;
+$L__BB0_8:                              // %__nv_log2f.exit
+	ld.param.u32 	%r70, [_attn_fwd_param_18];
+	ld.param.u32 	%r69, [_attn_fwd_param_17];
+	ld.param.u64 	%rd47, [_attn_fwd_param_5];
+	ld.param.u64 	%rd46, [_attn_fwd_param_4];
+	.loc	1 209 24                        // attention_precision.py:209:24
+	setp.lt.f32 	%p32, %f1148, 0f00800000;
+	mul.f32 	%f972, %f1148, 0f4B000000;
+	selp.f32 	%f222, %f972, %f1148, %p32;
+	selp.f32 	%f973, 0fC1B80000, 0f00000000, %p32;
+	mov.b32 	%r947, %f222;
+	add.s32 	%r948, %r947, -1060439283;
+	and.b32  	%r949, %r948, -8388608;
+	sub.s32 	%r950, %r947, %r949;
+	mov.b32 	%f974, %r950;
+	cvt.rn.f32.s32 	%f975, %r949;
+	fma.rn.ftz.f32 	%f977, %f975, %f945, %f973;
+	add.f32 	%f978, %f974, 0fBF800000;
+	fma.rn.ftz.f32 	%f981, %f949, %f978, %f948;
+	fma.rn.ftz.f32 	%f983, %f981, %f978, %f951;
+	fma.rn.ftz.f32 	%f985, %f983, %f978, %f953;
+	fma.rn.ftz.f32 	%f987, %f985, %f978, %f955;
+	fma.rn.ftz.f32 	%f989, %f987, %f978, %f957;
+	fma.rn.ftz.f32 	%f991, %f989, %f978, %f959;
+	fma.rn.ftz.f32 	%f993, %f991, %f978, %f961;
+	fma.rn.ftz.f32 	%f995, %f993, %f978, %f963;
+	fma.rn.ftz.f32 	%f997, %f995, %f978, %f965;
+	mul.f32 	%f998, %f978, %f997;
+	mul.f32 	%f999, %f978, %f998;
+	fma.rn.ftz.f32 	%f1001, %f978, %f969, %f999;
+	add.f32 	%f1184, %f977, %f1001;
+	setp.lt.u32 	%p33, %r947, 2139095040;
+	@%p33 bra 	$L__BB0_10;
+// %bb.9:                               // %__nv_fmaf_rn.exit.i.i203
+	.loc	1 0 24                          // attention_precision.py:0:24
+	fma.rn.ftz.f32 	%f1184, %f222, %f971, %f971;
+$L__BB0_10:                             // %__nv_log2f.exit206
+	.loc	1 209 24                        // attention_precision.py:209:24
+	setp.eq.f32 	%p53, %f218, 0f00000000;
+	selp.f32 	%f1003, 0fFF800000, %f1183, %p53;
+	.loc	1 146 19                        // attention_precision.py:146:19
+	add.s64 	%rd182, %rd47, %rd61;
+	.loc	1 151 8                         // attention_precision.py:151:8
+	cvt.s64.s32 	%rd183, %r69;
+	.loc	1 154 46                        // attention_precision.py:154:46
+	setp.eq.s32 	%p36, %r7, 0;
+	and.b32  	%r1084, %r3, 63;
+	.loc	1 154 33                        // attention_precision.py:154:33
+	or.b32  	%r1085, %r2, %r1084;
+	.loc	1 209 24                        // attention_precision.py:209:24
+	setp.eq.f32 	%p54, %f222, 0f00000000;
+	selp.f32 	%f1004, 0fFF800000, %f1184, %p54;
+	.loc	1 209 11                        // attention_precision.py:209:11
+	add.f32 	%f1005, %f1181, %f1003;
+	add.f32 	%f1006, %f1182, %f1004;
+	.loc	1 210 16                        // attention_precision.py:210:16
+	mov.b32 	%r952, %f1111;
+	mov.b32 	%r953, %f1147;
+	// begin inline asm
+	div.full.f32 %r951, %r952, %r953;
+	// end inline asm
+	mov.b32 	%f1007, %r951;
+	mov.b32 	%r955, %f1112;
+	// begin inline asm
+	div.full.f32 %r954, %r955, %r953;
+	// end inline asm
+	mov.b32 	%f1008, %r954;
+	mov.b32 	%r958, %f1113;
+	mov.b32 	%r959, %f1148;
+	// begin inline asm
+	div.full.f32 %r957, %r958, %r959;
+	// end inline asm
+	mov.b32 	%f1009, %r957;
+	mov.b32 	%r961, %f1114;
+	// begin inline asm
+	div.full.f32 %r960, %r961, %r959;
+	// end inline asm
+	mov.b32 	%f1010, %r960;
+	mov.b32 	%r964, %f1115;
+	// begin inline asm
+	div.full.f32 %r963, %r964, %r953;
+	// end inline asm
+	mov.b32 	%f1011, %r963;
+	mov.b32 	%r967, %f1116;
+	// begin inline asm
+	div.full.f32 %r966, %r967, %r953;
+	// end inline asm
+	mov.b32 	%f1012, %r966;
+	mov.b32 	%r970, %f1117;
+	// begin inline asm
+	div.full.f32 %r969, %r970, %r959;
+	// end inline asm
+	mov.b32 	%f1013, %r969;
+	mov.b32 	%r973, %f1118;
+	// begin inline asm
+	div.full.f32 %r972, %r973, %r959;
+	// end inline asm
+	mov.b32 	%f1014, %r972;
+	mov.b32 	%r976, %f1119;
+	// begin inline asm
+	div.full.f32 %r975, %r976, %r953;
+	// end inline asm
+	mov.b32 	%f1015, %r975;
+	mov.b32 	%r979, %f1120;
+	// begin inline asm
+	div.full.f32 %r978, %r979, %r953;
+	// end inline asm
+	mov.b32 	%f1016, %r978;
+	mov.b32 	%r982, %f1121;
+	// begin inline asm
+	div.full.f32 %r981, %r982, %r959;
+	// end inline asm
+	mov.b32 	%f1017, %r981;
+	mov.b32 	%r985, %f1122;
+	// begin inline asm
+	div.full.f32 %r984, %r985, %r959;
+	// end inline asm
+	mov.b32 	%f1018, %r984;
+	mov.b32 	%r988, %f1123;
+	// begin inline asm
+	div.full.f32 %r987, %r988, %r953;
+	// end inline asm
+	mov.b32 	%f1019, %r987;
+	mov.b32 	%r991, %f1124;
+	// begin inline asm
+	div.full.f32 %r990, %r991, %r953;
+	// end inline asm
+	mov.b32 	%f1020, %r990;
+	mov.b32 	%r994, %f1125;
+	// begin inline asm
+	div.full.f32 %r993, %r994, %r959;
+	// end inline asm
+	mov.b32 	%f1021, %r993;
+	mov.b32 	%r997, %f1126;
+	// begin inline asm
+	div.full.f32 %r996, %r997, %r959;
+	// end inline asm
+	mov.b32 	%f1022, %r996;
+	mov.b32 	%r1000, %f1127;
+	// begin inline asm
+	div.full.f32 %r999, %r1000, %r953;
+	// end inline asm
+	mov.b32 	%f1023, %r999;
+	mov.b32 	%r1003, %f1128;
+	// begin inline asm
+	div.full.f32 %r1002, %r1003, %r953;
+	// end inline asm
+	mov.b32 	%f1024, %r1002;
+	mov.b32 	%r1006, %f1129;
+	// begin inline asm
+	div.full.f32 %r1005, %r1006, %r959;
+	// end inline asm
+	mov.b32 	%f1025, %r1005;
+	mov.b32 	%r1009, %f1130;
+	// begin inline asm
+	div.full.f32 %r1008, %r1009, %r959;
+	// end inline asm
+	mov.b32 	%f1026, %r1008;
+	mov.b32 	%r1012, %f1131;
+	// begin inline asm
+	div.full.f32 %r1011, %r1012, %r953;
+	// end inline asm
+	mov.b32 	%f1027, %r1011;
+	mov.b32 	%r1015, %f1132;
+	// begin inline asm
+	div.full.f32 %r1014, %r1015, %r953;
+	// end inline asm
+	mov.b32 	%f1028, %r1014;
+	mov.b32 	%r1018, %f1133;
+	// begin inline asm
+	div.full.f32 %r1017, %r1018, %r959;
+	// end inline asm
+	mov.b32 	%f1029, %r1017;
+	mov.b32 	%r1021, %f1134;
+	// begin inline asm
+	div.full.f32 %r1020, %r1021, %r959;
+	// end inline asm
+	mov.b32 	%f1030, %r1020;
+	mov.b32 	%r1024, %f1135;
+	// begin inline asm
+	div.full.f32 %r1023, %r1024, %r953;
+	// end inline asm
+	mov.b32 	%f1031, %r1023;
+	mov.b32 	%r1027, %f1136;
+	// begin inline asm
+	div.full.f32 %r1026, %r1027, %r953;
+	// end inline asm
+	mov.b32 	%f1032, %r1026;
+	mov.b32 	%r1030, %f1137;
+	// begin inline asm
+	div.full.f32 %r1029, %r1030, %r959;
+	// end inline asm
+	mov.b32 	%f1033, %r1029;
+	mov.b32 	%r1033, %f1138;
+	// begin inline asm
+	div.full.f32 %r1032, %r1033, %r959;
+	// end inline asm
+	mov.b32 	%f1034, %r1032;
+	mov.b32 	%r1036, %f1139;
+	// begin inline asm
+	div.full.f32 %r1035, %r1036, %r953;
+	// end inline asm
+	mov.b32 	%f1035, %r1035;
+	mov.b32 	%r1039, %f1140;
+	// begin inline asm
+	div.full.f32 %r1038, %r1039, %r953;
+	// end inline asm
+	mov.b32 	%f1036, %r1038;
+	mov.b32 	%r1042, %f1141;
+	// begin inline asm
+	div.full.f32 %r1041, %r1042, %r959;
+	// end inline asm
+	mov.b32 	%f1037, %r1041;
+	mov.b32 	%r1045, %f1142;
+	// begin inline asm
+	div.full.f32 %r1044, %r1045, %r959;
+	// end inline asm
+	mov.b32 	%f1038, %r1044;
+	.loc	1 211 26                        // attention_precision.py:211:26
+	mul.lo.s32 	%r1086, %r72, %r70;
+	.loc	1 211 17                        // attention_precision.py:211:17
+	mul.wide.s32 	%rd184, %r1086, 4;
+	add.s64 	%rd185, %rd46, %rd184;
+	.loc	1 211 34                        // attention_precision.py:211:34
+	mul.wide.s32 	%rd186, %r1085, 4;
+	add.s64 	%rd176, %rd185, %rd186;
+	.loc	1 212 21                        // attention_precision.py:212:21
+	shl.b32 	%r1087, %r10, 2;
+	add.s32 	%r1047, %r136, %r1087;
+	mov.b32 	%r1048, %f1005;
+	mov.pred 	%p34, -1;
+	// begin inline asm
+	@%p34 st.shared.b32 [ %r1047 + 0 ], %r1048;
+	// end inline asm
+	add.s32 	%r1049, %r1047, 32;
+	mov.b32 	%r1050, %f1006;
+	// begin inline asm
+	@%p34 st.shared.b32 [ %r1049 + 0 ], %r1050;
+	// end inline asm
+	bar.sync 	0;
+	shl.b32 	%r1089, %r1084, 2;
+	add.s32 	%r1090, %r136, %r1089;
+	ld.shared.u32 	%r1051, [%r1090];
+	// begin inline asm
+	@%p36 st.global.b32 [ %rd176 + 0 ], { %r1051 };
+	// end inline asm
+	.loc	1 213 33                        // attention_precision.py:213:33
+	cvt.rn.f16.f32 	%rs65, %f1007;
+	cvt.rn.f16.f32 	%rs66, %f1008;
+	cvt.rn.f16.f32 	%rs67, %f1009;
+	cvt.rn.f16.f32 	%rs68, %f1010;
+	cvt.rn.f16.f32 	%rs69, %f1011;
+	cvt.rn.f16.f32 	%rs70, %f1012;
+	cvt.rn.f16.f32 	%rs71, %f1013;
+	cvt.rn.f16.f32 	%rs72, %f1014;
+	cvt.rn.f16.f32 	%rs73, %f1015;
+	cvt.rn.f16.f32 	%rs74, %f1016;
+	cvt.rn.f16.f32 	%rs75, %f1017;
+	cvt.rn.f16.f32 	%rs76, %f1018;
+	cvt.rn.f16.f32 	%rs77, %f1019;
+	cvt.rn.f16.f32 	%rs78, %f1020;
+	cvt.rn.f16.f32 	%rs79, %f1021;
+	cvt.rn.f16.f32 	%rs80, %f1022;
+	cvt.rn.f16.f32 	%rs81, %f1023;
+	cvt.rn.f16.f32 	%rs82, %f1024;
+	cvt.rn.f16.f32 	%rs83, %f1025;
+	cvt.rn.f16.f32 	%rs84, %f1026;
+	cvt.rn.f16.f32 	%rs85, %f1027;
+	cvt.rn.f16.f32 	%rs86, %f1028;
+	cvt.rn.f16.f32 	%rs87, %f1029;
+	cvt.rn.f16.f32 	%rs88, %f1030;
+	cvt.rn.f16.f32 	%rs89, %f1031;
+	cvt.rn.f16.f32 	%rs90, %f1032;
+	cvt.rn.f16.f32 	%rs91, %f1033;
+	cvt.rn.f16.f32 	%rs92, %f1034;
+	cvt.rn.f16.f32 	%rs93, %f1035;
+	cvt.rn.f16.f32 	%rs94, %f1036;
+	cvt.rn.f16.f32 	%rs95, %f1037;
+	cvt.rn.f16.f32 	%rs96, %f1038;
+	.loc	1 213 26                        // attention_precision.py:213:26
+	mul.lo.s64 	%rd187, %rd10, %rd183;
+	mul.lo.s64 	%rd188, %rd11, %rd183;
+	mul.lo.s64 	%rd189, %rd12, %rd183;
+	mul.lo.s64 	%rd190, %rd13, %rd183;
+	shl.b64 	%rd191, %rd187, 1;
+	add.s64 	%rd192, %rd182, %rd191;
+	add.s64 	%rd177, %rd192, %rd132;
+	shl.b64 	%rd194, %rd188, 1;
+	add.s64 	%rd195, %rd182, %rd194;
+	add.s64 	%rd178, %rd195, %rd132;
+	shl.b64 	%rd196, %rd189, 1;
+	add.s64 	%rd197, %rd182, %rd196;
+	add.s64 	%rd179, %rd197, %rd132;
+	shl.b64 	%rd198, %rd190, 1;
+	add.s64 	%rd199, %rd182, %rd198;
+	add.s64 	%rd180, %rd199, %rd132;
+	bar.sync 	0;
+	shl.b32 	%r1091, %r3, 4;
+	and.b32  	%r1092, %r1091, 448;
+	shl.b32 	%r1094, %r114, 5;
+	or.b32  	%r1095, %r1094, %r1092;
+	or.b32  	%r1096, %r1095, %r46;
+	and.b32  	%r1097, %r9, 1016;
+	shr.u32 	%r1098, %r1095, 3;
+	add.s32 	%r1099, %r1098, %r1096;
+	shl.b32 	%r1100, %r1099, 1;
+	add.s32 	%r1052, %r136, %r1100;
+	// begin inline asm
+	@%p34 st.shared.v2.b16 [ %r1052 + 0 ], { %rs65, %rs66 };
+	// end inline asm
+	or.b32  	%r1101, %r1095, 512;
+	shr.u32 	%r1102, %r1101, 3;
+	add.s32 	%r1103, %r1102, %r1096;
+	shl.b32 	%r1104, %r1103, 1;
+	add.s32 	%r1105, %r136, %r1104;
+	add.s32 	%r1053, %r1105, 1024;
+	// begin inline asm
+	@%p34 st.shared.v2.b16 [ %r1053 + 0 ], { %rs67, %rs68 };
+	// end inline asm
+	add.s32 	%r1054, %r1052, 16;
+	// begin inline asm
+	@%p34 st.shared.v2.b16 [ %r1054 + 0 ], { %rs69, %rs70 };
+	// end inline asm
+	and.b32  	%r1106, %r1102, 504;
+	add.s32 	%r1107, %r1106, %r1096;
+	shl.b32 	%r1108, %r1107, 1;
+	add.s32 	%r1109, %r136, %r1108;
+	add.s32 	%r1055, %r1109, 1040;
+	// begin inline asm
+	@%p34 st.shared.v2.b16 [ %r1055 + 0 ], { %rs71, %rs72 };
+	// end inline asm
+	add.s32 	%r1056, %r1052, 32;
+	// begin inline asm
+	@%p34 st.shared.v2.b16 [ %r1056 + 0 ], { %rs73, %rs74 };
+	// end inline asm
+	add.s32 	%r1057, %r1109, 1056;
+	// begin inline asm
+	@%p34 st.shared.v2.b16 [ %r1057 + 0 ], { %rs75, %rs76 };
+	// end inline asm
+	add.s32 	%r1058, %r1052, 48;
+	// begin inline asm
+	@%p34 st.shared.v2.b16 [ %r1058 + 0 ], { %rs77, %rs78 };
+	// end inline asm
+	add.s32 	%r1059, %r1109, 1072;
+	// begin inline asm
+	@%p34 st.shared.v2.b16 [ %r1059 + 0 ], { %rs79, %rs80 };
+	// end inline asm
+	add.s32 	%r1060, %r1052, 64;
+	// begin inline asm
+	@%p34 st.shared.v2.b16 [ %r1060 + 0 ], { %rs81, %rs82 };
+	// end inline asm
+	add.s32 	%r1061, %r1109, 1088;
+	// begin inline asm
+	@%p34 st.shared.v2.b16 [ %r1061 + 0 ], { %rs83, %rs84 };
+	// end inline asm
+	add.s32 	%r1062, %r1052, 80;
+	// begin inline asm
+	@%p34 st.shared.v2.b16 [ %r1062 + 0 ], { %rs85, %rs86 };
+	// end inline asm
+	add.s32 	%r1063, %r1109, 1104;
+	// begin inline asm
+	@%p34 st.shared.v2.b16 [ %r1063 + 0 ], { %rs87, %rs88 };
+	// end inline asm
+	add.s32 	%r1064, %r1052, 96;
+	// begin inline asm
+	@%p34 st.shared.v2.b16 [ %r1064 + 0 ], { %rs89, %rs90 };
+	// end inline asm
+	add.s32 	%r1065, %r1109, 1120;
+	// begin inline asm
+	@%p34 st.shared.v2.b16 [ %r1065 + 0 ], { %rs91, %rs92 };
+	// end inline asm
+	add.s32 	%r1066, %r1052, 112;
+	// begin inline asm
+	@%p34 st.shared.v2.b16 [ %r1066 + 0 ], { %rs93, %rs94 };
+	// end inline asm
+	add.s32 	%r1067, %r1109, 1136;
+	// begin inline asm
+	@%p34 st.shared.v2.b16 [ %r1067 + 0 ], { %rs95, %rs96 };
+	// end inline asm
+	bar.sync 	0;
+	and.b32  	%r1110, %r3, 120;
+	add.s32 	%r1111, %r1097, %r1110;
+	shl.b32 	%r1112, %r1111, 1;
+	add.s32 	%r1113, %r136, %r1112;
+	ld.shared.v4.u32 	{%r1068, %r1069, %r1070, %r1071}, [%r1113];
+	or.b32  	%r1114, %r1097, 1024;
+	shr.u32 	%r1115, %r1114, 3;
+	and.b32  	%r1116, %r1115, 248;
+	add.s32 	%r1117, %r1116, %r1097;
+	shl.b32 	%r1118, %r1117, 1;
+	add.s32 	%r1119, %r136, %r1118;
+	ld.shared.v4.u32 	{%r1072, %r1073, %r1074, %r1075}, [%r1119+2048];
+	or.b32  	%r1120, %r1097, 2048;
+	shr.u32 	%r1121, %r1120, 3;
+	and.b32  	%r1122, %r1121, 376;
+	add.s32 	%r1123, %r1122, %r1097;
+	shl.b32 	%r1124, %r1123, 1;
+	add.s32 	%r1125, %r136, %r1124;
+	ld.shared.v4.u32 	{%r1076, %r1077, %r1078, %r1079}, [%r1125+4096];
+	or.b32  	%r1126, %r1097, 3072;
+	shr.u32 	%r1127, %r1126, 3;
+	and.b32  	%r1128, %r1127, 504;
+	add.s32 	%r1129, %r1128, %r1097;
+	shl.b32 	%r1130, %r1129, 1;
+	add.s32 	%r1131, %r136, %r1130;
+	ld.shared.v4.u32 	{%r1080, %r1081, %r1082, %r1083}, [%r1131+6144];
+	// begin inline asm
+	st.global.v4.b32 [ %rd177 + 0 ], { %r1068, %r1069, %r1070, %r1071 };
+	// end inline asm
+	// begin inline asm
+	st.global.v4.b32 [ %rd178 + 0 ], { %r1072, %r1073, %r1074, %r1075 };
+	// end inline asm
+	// begin inline asm
+	st.global.v4.b32 [ %rd179 + 0 ], { %r1076, %r1077, %r1078, %r1079 };
+	// end inline asm
+	// begin inline asm
+	st.global.v4.b32 [ %rd180 + 0 ], { %r1080, %r1081, %r1082, %r1083 };
+	// end inline asm
+	.loc	1 213 4                         // attention_precision.py:213:4
+	ret;
+$L__tmp10:
+$L__func_end0:
+                                        // -- End function
+}
+	.file	1 "/data/qizhan/taylor/attention_precision.py"
+	.file	2 "/data/qizhan/operator/triton/python/triton/language/standard.py"
+	.section	.debug_abbrev
+	{
+.b8 1                                   // Abbreviation Code
+.b8 17                                  // DW_TAG_compile_unit
+.b8 1                                   // DW_CHILDREN_yes
+.b8 37                                  // DW_AT_producer
+.b8 8                                   // DW_FORM_string
+.b8 19                                  // DW_AT_language
+.b8 5                                   // DW_FORM_data2
+.b8 3                                   // DW_AT_name
+.b8 8                                   // DW_FORM_string
+.b8 16                                  // DW_AT_stmt_list
+.b8 6                                   // DW_FORM_data4
+.b8 27                                  // DW_AT_comp_dir
+.b8 8                                   // DW_FORM_string
+.b8 0                                   // EOM(1)
+.b8 0                                   // EOM(2)
+.b8 2                                   // Abbreviation Code
+.b8 46                                  // DW_TAG_subprogram
+.b8 0                                   // DW_CHILDREN_no
+.b8 3                                   // DW_AT_name
+.b8 8                                   // DW_FORM_string
+.b8 32                                  // DW_AT_inline
+.b8 11                                  // DW_FORM_data1
+.b8 0                                   // EOM(1)
+.b8 0                                   // EOM(2)
+.b8 3                                   // Abbreviation Code
+.b8 46                                  // DW_TAG_subprogram
+.b8 1                                   // DW_CHILDREN_yes
+.b8 17                                  // DW_AT_low_pc
+.b8 1                                   // DW_FORM_addr
+.b8 18                                  // DW_AT_high_pc
+.b8 1                                   // DW_FORM_addr
+.b8 49                                  // DW_AT_abstract_origin
+.b8 19                                  // DW_FORM_ref4
+.b8 0                                   // EOM(1)
+.b8 0                                   // EOM(2)
+.b8 4                                   // Abbreviation Code
+.b8 29                                  // DW_TAG_inlined_subroutine
+.b8 0                                   // DW_CHILDREN_no
+.b8 49                                  // DW_AT_abstract_origin
+.b8 19                                  // DW_FORM_ref4
+.b8 17                                  // DW_AT_low_pc
+.b8 1                                   // DW_FORM_addr
+.b8 18                                  // DW_AT_high_pc
+.b8 1                                   // DW_FORM_addr
+.b8 88                                  // DW_AT_call_file
+.b8 11                                  // DW_FORM_data1
+.b8 89                                  // DW_AT_call_line
+.b8 11                                  // DW_FORM_data1
+.b8 87                                  // DW_AT_call_column
+.b8 11                                  // DW_FORM_data1
+.b8 0                                   // EOM(1)
+.b8 0                                   // EOM(2)
+.b8 0                                   // EOM(3)
+	}
+	.section	.debug_info
+	{
+.b32 147                                // Length of Unit
+.b8 2                                   // DWARF version number
+.b8 0
+.b32 .debug_abbrev                      // Offset Into Abbrev. Section
+.b8 8                                   // Address Size (in bytes)
+.b8 1                                   // Abbrev [1] 0xb:0x8c DW_TAG_compile_unit
+.b8 116                                 // DW_AT_producer
+.b8 114
+.b8 105
+.b8 116
+.b8 111
+.b8 110
+.b8 0
+.b8 2                                   // DW_AT_language
+.b8 0
+.b8 97                                  // DW_AT_name
+.b8 116
+.b8 116
+.b8 101
+.b8 110
+.b8 116
+.b8 105
+.b8 111
+.b8 110
+.b8 95
+.b8 112
+.b8 114
+.b8 101
+.b8 99
+.b8 105
+.b8 115
+.b8 105
+.b8 111
+.b8 110
+.b8 46
+.b8 112
+.b8 121
+.b8 0
+.b32 .debug_line                        // DW_AT_stmt_list
+.b8 47                                  // DW_AT_comp_dir
+.b8 100
+.b8 97
+.b8 116
+.b8 97
+.b8 47
+.b8 113
+.b8 105
+.b8 122
+.b8 104
+.b8 97
+.b8 110
+.b8 47
+.b8 116
+.b8 97
+.b8 121
+.b8 108
+.b8 111
+.b8 114
+.b8 0
+.b8 2                                   // Abbrev [2] 0x44:0xc DW_TAG_subprogram
+.b8 95                                  // DW_AT_name
+.b8 97
+.b8 116
+.b8 116
+.b8 110
+.b8 95
+.b8 102
+.b8 119
+.b8 100
+.b8 0
+.b8 1                                   // DW_AT_inline
+.b8 3                                   // Abbrev [3] 0x50:0x46 DW_TAG_subprogram
+.b64 $L__func_begin0                    // DW_AT_low_pc
+.b64 $L__func_end0                      // DW_AT_high_pc
+.b32 68                                 // DW_AT_abstract_origin
+.b8 4                                   // Abbrev [4] 0x65:0x18 DW_TAG_inlined_subroutine
+.b32 68                                 // DW_AT_abstract_origin
+.b64 $L__tmp1                           // DW_AT_low_pc
+.b64 $L__tmp6                           // DW_AT_high_pc
+.b8 1                                   // DW_AT_call_file
+.b8 185                                 // DW_AT_call_line
+.b8 12                                  // DW_AT_call_column
+.b8 4                                   // Abbrev [4] 0x7d:0x18 DW_TAG_inlined_subroutine
+.b32 68                                 // DW_AT_abstract_origin
+.b64 $L__tmp6                           // DW_AT_low_pc
+.b64 $L__tmp9                           // DW_AT_high_pc
+.b8 1                                   // DW_AT_call_file
+.b8 207                                 // DW_AT_call_line
+.b8 12                                  // DW_AT_call_column
+.b8 0                                   // End Of Children Mark
+.b8 0                                   // End Of Children Mark
+	}
+	.section	.debug_macinfo	{	}

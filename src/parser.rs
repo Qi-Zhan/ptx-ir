@@ -39,14 +39,20 @@ impl<'a> Parser<'a> {
         let mut tokens = vec![];
         loop {
             let (token, span) = self.next_token("directive")?;
+            // Simple directives
             if let Token::Loc = token {
                 return Ok(Directive::Loc);
             } else if let Token::Section = token {
                 return self.consume_section();
+            } else if let Token::Pragma = token {
+                let (name, _) = self.parse_string()?;
+                self.consume_if_match(Token::Semicolon)?;
+                return Ok(Directive::Pragma(name));
             }
+
             tokens.push((token.clone(), span));
+            // .entry or .func
             if token.is_function() {
-                // .entry or .func
                 return Ok(Directive::Function(self.parse_function(tokens)?));
             }
             if let Token::Identifier(_) = token {
@@ -100,7 +106,6 @@ impl<'a> Parser<'a> {
     fn parse_statement(&mut self) -> ParseResult<Statement> {
         let token = self.cur_token()?;
         if token.is_directive() {
-            // directive
             let directive = self.parse_directive()?;
             Ok(Statement::Directive(directive))
         } else if let Token::Identifier(name) = token {
@@ -174,16 +179,18 @@ impl<'a> Parser<'a> {
     fn parse_variable_declaration(
         &mut self,
         mut tokens: Vec<(Token, Span)>,
-    ) -> ParseResult<VariableDeclaration> {
+    ) -> ParseResult<VariableDecl> {
         let (name, span) = tokens.pop().unwrap();
         if let Token::Identifier(name) = name {
-            let mut variable = VariableDeclaration {
+            let mut variable = VariableDecl {
                 name,
                 ty: Type::U32,
                 state_space: None,
                 linkage: None,
                 vector: None,
                 alignment: None,
+                array: None,
+                init: None,
                 span,
             };
             variable = self.build_variable_prefix(variable, tokens)?;
@@ -193,7 +200,22 @@ impl<'a> Parser<'a> {
                 variable.vector = Some(token as u32);
                 self.consume_or_error(Token::GreaterThan)?;
             }
-
+            if self.consume_if_match(Token::LeftBracket)?.is_some() {
+                let num = if self.consume_if_match(Token::RightBracket)?.is_none() {
+                    let (token, _) = self.parse_integer()?;
+                    variable.array = Some(token as u32);
+                    self.consume_or_error(Token::RightBracket)?;
+                    token as u32
+                } else {
+                    0
+                };
+                variable.array = Some(num);
+            }
+            // initialize
+            if self.consume_if_match(Token::Assign)?.is_some() {
+                let init = self.parse_operand()?;
+                variable.init = Some(init);
+            }
             self.consume_or_error(Token::Semicolon)?;
 
             Ok(variable)
@@ -392,7 +414,7 @@ impl<'a> Parser<'a> {
             Token::Mma => {
                 self.consume_or_error(Token::Sync)?;
                 self.consume_or_error(Token::Aligned)?;
-                let (shape, _) = self.next_token("opcode")?;
+                let shape = self.parse_shape3()?;
                 self.consume_or_error(Token::Row)?;
                 self.consume_or_error(Token::Col)?;
                 let dtype = self.next_type("opcode")?;
@@ -404,19 +426,40 @@ impl<'a> Parser<'a> {
                     btype,
                     ctype,
                     dtype,
-                    shape: shape.into(),
+                    shape,
                 }
             }
-            Token::LdMatrix => {
-                let mut direction = vec![];
-                let mut cur_token = self.cur_token()?;
-                while cur_token.is_directive() {
-                    direction.push(cur_token.clone());
-                    self.next_token("opcode")?;
-                    cur_token = self.cur_token()?;
-                }
+            // float: mad.rnd{.ftz}{.sat}.f32  d, a, b, c;
+            // integer: mad.mode{.sat}.s32  d, a, b, c;
+            Token::Mad => {
+                let mode = self.parse_mul_mode()?;
+                let rounding = self.parse_round_mode()?;
+                let ftz = self.consume_if_match(Token::Ftz)?.is_some();
+                let sat = self.consume_if_match(Token::Saturate)?.is_some();
                 let ty = self.next_type("opcode")?;
-                Opcode::LdMatrix { direction, ty }
+                Opcode::Mad {
+                    mode,
+                    rounding,
+                    ftz,
+                    sat,
+                    ty,
+                }
+            }
+            // ldmatrix.sync.aligned.shape.num{.trans}{.ss}.type r, [p];
+            Token::LdMatrix => {
+                self.consume_or_error(Token::Sync)?;
+                self.consume_or_error(Token::Aligned)?;
+                let shape = self.parse_shape2()?;
+                let xnum = self.parse_xnum()?;
+                self.consume_if_match(Token::Trans)?;
+                let shared = self.consume_if_match(Token::Shared)?.is_some();
+                let ty = self.next_type("ldmatrix")?;
+                Opcode::LdMatrix {
+                    shape,
+                    ty,
+                    xnum,
+                    shared,
+                }
             }
             Token::Bra => Opcode::Bra,
             Token::Cp => {
@@ -434,6 +477,16 @@ impl<'a> Parser<'a> {
                 let to = self.next_type("opcode")?;
                 Opcode::Cvt { from, to, rounding }
             }
+            Token::Cvta => {
+                let to = self.consume_if_match(Token::To)?.is_some();
+                let state_space = self.parse_state_space()?;
+                let size = self.next_type("opcode")?;
+                Opcode::Cvta {
+                    to,
+                    state_space,
+                    size,
+                }
+            }
             Token::Bfe => Opcode::Bfe(self.next_type("opcode")?),
             _ => {
                 return Err(Diagnostic::error()
@@ -444,10 +497,54 @@ impl<'a> Parser<'a> {
         Ok((opcode, span))
     }
 
-    fn parse_round_mode(&mut self) -> ParseResult<Option<RoundingMode>> {
+    fn parse_shape2(&mut self) -> ParseResult<Shape2> {
+        let (next, span) = self.next_token("shape2")?;
+        match next {
+            Token::M8N8 => Ok(Shape2::M8N8),
+            Token::M8N16 => Ok(Shape2::M8N16),
+            _ => Err(Diagnostic::error()
+                .with_message(format!("expected m.n., found `{}`", next))
+                .with_labels(vec![Label::primary(self.file_id, span)])),
+        }
+    }
+
+    fn parse_shape3(&mut self) -> ParseResult<Shape3> {
+        let (next, span) = self.next_token("shape3")?;
+        match next {
+            Token::M16N8K16 => Ok(Shape3::M16N8K16),
+            Token::M16N8K32 => Ok(Shape3::M16N8K32),
+            _ => Err(Diagnostic::error()
+                .with_message(format!("expected m.n.k., found `{}`", next))
+                .with_labels(vec![Label::primary(self.file_id, span)])),
+        }
+    }
+
+    fn parse_string(&mut self) -> ParseResult<(String, Span)> {
+        let (token, span) = self.next_token("string")?;
+        match token {
+            Token::String(string) => Ok((string, span)),
+            _ => Err(Diagnostic::error()
+                .with_message(format!("expected `string`, found `{}`", token))
+                .with_labels(vec![Label::primary(self.file_id, span)])),
+        }
+    }
+
+    fn parse_xnum(&mut self) -> ParseResult<u32> {
+        let (next, span) = self.next_token("num")?;
+        match next {
+            Token::X4 => Ok(4),
+            Token::X1 => Ok(1),
+            Token::X2 => Ok(2),
+            _ => Err(Diagnostic::error()
+                .with_message(format!("expected number, found `{}`", next))
+                .with_labels(vec![Label::primary(self.file_id, span)])),
+        }
+    }
+
+    fn parse_round_mode(&mut self) -> ParseResult<Option<FloatRoundingMode>> {
         let token = self.cur_token()?;
         match token {
-            Token::Rn | Token::Rz | Token::Rm | Token::Rp => {
+            Token::Rn | Token::Rna | Token::Rz | Token::Rm | Token::Rp => {
                 self.next_token("round_mode")?;
                 Ok(Some(token.into()))
             }
@@ -609,6 +706,23 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn parse_state_space(&mut self) -> ParseResult<StateSpace> {
+        let (token, span) = self.next_token("state_space")?;
+        match token {
+            Token::Reg => Ok(StateSpace::Reg),
+            Token::Const => Ok(StateSpace::Const),
+            Token::Local => Ok(StateSpace::Local),
+            Token::Param => Ok(StateSpace::Param),
+            Token::SReg => Ok(StateSpace::SReg),
+            Token::Tex => Ok(StateSpace::Tex),
+            Token::Global => Ok(StateSpace::Global),
+            Token::Shared => Ok(StateSpace::Shared),
+            _ => Err(Diagnostic::error()
+                .with_message(format!("expected state_space, found `{}`", token))
+                .with_labels(vec![Label::primary(self.file_id, span)])),
+        }
+    }
+
     fn build_parameter(
         &self,
         mut parameter: Parameter,
@@ -675,9 +789,9 @@ impl<'a> Parser<'a> {
 
     fn build_variable_prefix(
         &self,
-        mut variable: VariableDeclaration,
+        mut variable: VariableDecl,
         tokens: Vec<(Token, Span)>,
-    ) -> ParseResult<VariableDeclaration> {
+    ) -> ParseResult<VariableDecl> {
         for (token, span) in tokens {
             match token {
                 Token::Global => {

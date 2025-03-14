@@ -2,6 +2,11 @@
 name = "ptx-ir"
 version = "0.1.0"
 edition = "2024"
+authors = ["Qi Zhan <qizhan@zju.edu.cn>"]
+description = "Parallel Thread Execution (PTX) IR structure and parser"
+repository = "https://github.com/Qi-Zhan/ptx-ir"
+readme = "README.md"
+license = "MIT"
 
 [dependencies]
 clap = { version = "4.5.31", features = ["derive"] }
