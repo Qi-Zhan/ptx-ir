@@ -33,8 +33,8 @@ fn lex_double_float(lex: &mut Lexer<'_, Token>) -> f64 {
 
 use logos::{Lexer, Logos};
 #[derive(Logos, Debug, Clone, PartialEq)]
-#[logos(skip r"[ \t\n\f]+")] // Ignore this regex pattern between tokens
-#[logos(skip r"//.*")] // Ignore this regex pattern between tokens
+#[logos(skip r"[ \t\n\f]+")] // Ignore blank space
+#[logos(skip r"//.*")] // Ignore comment
 pub enum Token {
     // 4.3.1 Directives
     #[token(".address_size")]
@@ -452,6 +452,8 @@ pub enum Token {
     F16x2,
     #[token(".f32")]
     F32,
+    #[token(".tf32")]
+    Tf32,
     #[token(".f64")]
     F64,
     #[token(".s8")]
@@ -482,10 +484,8 @@ pub enum Token {
     B128,
     #[token(".pred")]
     Pred,
-    #[token("bf16")]
+    #[token(".bf16")]
     Bf16,
-    #[token("tf32")]
-    Tf32,
 
     /// binary literal:       0[bB]{bit}+U?
     #[regex("0[bB][01]+", |lex| lex.slice().parse::<u64>().unwrap(),priority = 2)]
@@ -626,6 +626,18 @@ pub enum Token {
     Gt,
     #[token(".ge")]
     Ge,
+    #[token(".equ")]
+    Equ,
+    #[token(".neu")]
+    Neu,
+    #[token(".ltu")]
+    Ltu,
+    #[token(".leu")]
+    Leu,
+    #[token(".gtu")]
+    Gtu,
+    #[token(".geu")]
+    Geu,
     #[token(".ftz")]
     Ftz,
     #[token(".sat")]
@@ -667,6 +679,8 @@ pub enum Token {
     M16N8K16,
     #[token(".m16n8k32")]
     M16N8K32,
+    #[token(".m16n8k8")]
+    M16N8K8,
     #[token(".bfly")]
     Bfly,
     #[token(".approx")]
@@ -677,6 +691,8 @@ pub enum Token {
     Full,
     #[token(".to")]
     To,
+    #[token(".uni")]
+    Uni,
 }
 
 impl Token {
@@ -943,8 +959,8 @@ impl fmt::Display for Token {
             Token::B64 => f.write_str(".b64"),
             Token::B128 => f.write_str(".b128"),
             Token::Pred => f.write_str(".pred"),
-            Token::Bf16 => f.write_str("bf16"),
-            Token::Tf32 => f.write_str("tf32"),
+            Token::Bf16 => f.write_str(".bf16"),
+            Token::Tf32 => f.write_str(".tf32"),
             Token::BinaryConstant(num) => write!(f, "0b{}", num),
             Token::DecimalConstant(num) => write!(f, "{}", num),
             Token::HexConstant(num) => write!(f, "0x{:x}", num),
@@ -1036,6 +1052,14 @@ impl fmt::Display for Token {
             Token::NTIdY => f.write_str("%ntid.y"),
             Token::NTIdZ => f.write_str("%ntid.z"),
             Token::To => f.write_str(".to"),
+            Token::Uni => f.write_str(".uni"),
+            Token::M16N8K8 => f.write_str(".m16n8k8"),
+            Token::Equ => f.write_str(".equ"),
+            Token::Neu => f.write_str(".neu"),
+            Token::Ltu => f.write_str(".ltu"),
+            Token::Leu => f.write_str(".leu"),
+            Token::Gtu => f.write_str(".gtu"),
+            Token::Geu => f.write_str(".geu"),
         }
     }
 }

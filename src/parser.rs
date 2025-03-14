@@ -333,6 +333,18 @@ impl<'a> Parser<'a> {
     fn parse_opcode(&mut self) -> ParseResult<(Opcode, Span)> {
         let (token, span) = self.next_token("opcode")?;
         let opcode = match token {
+            Token::Abs => {
+                let ftz = self.consume_if_match(Token::Ftz)?.is_some();
+                let ty = self.next_type("opcode")?;
+                Opcode::Abs { ftz, ty }
+            }
+            Token::Rcp => {
+                let approx = self.consume_if_match(Token::Approx)?.is_some();
+                let ftz = self.consume_if_match(Token::Ftz)?.is_some();
+                let ty = self.next_type("opcode")?;
+                Opcode::Rcp { approx, ftz, ty }
+            }
+            Token::Rem => Opcode::Rem(self.next_type("opcode")?),
             Token::Mov => Opcode::Mov(self.next_type("opcode")?),
             Token::Mul => {
                 let mode = self.parse_mul_mode()?;
@@ -391,6 +403,7 @@ impl<'a> Parser<'a> {
                 Opcode::Bar { thread, sync }
             }
             Token::Max => Opcode::Max(self.next_type("opcode")?),
+            Token::Min => Opcode::Min(self.next_type("opcode")?),
             Token::Shfl => {
                 self.consume_or_error(Token::Sync)?;
                 // TODO: fix mode
@@ -461,7 +474,10 @@ impl<'a> Parser<'a> {
                     shared,
                 }
             }
-            Token::Bra => Opcode::Bra,
+            Token::Bra => {
+                self.consume_if_match(Token::Uni)?;
+                Opcode::Bra
+            }
             Token::Cp => {
                 // ignore all directives
                 let mut cur_token = self.cur_token()?;
@@ -511,6 +527,7 @@ impl<'a> Parser<'a> {
     fn parse_shape3(&mut self) -> ParseResult<Shape3> {
         let (next, span) = self.next_token("shape3")?;
         match next {
+            Token::M16N8K8 => Ok(Shape3::M16N8K8),
             Token::M16N8K16 => Ok(Shape3::M16N8K16),
             Token::M16N8K32 => Ok(Shape3::M16N8K32),
             _ => Err(Diagnostic::error()
@@ -561,6 +578,12 @@ impl<'a> Parser<'a> {
             Token::Ne => Ok(PredicateOp::NotEqual),
             Token::Gt => Ok(PredicateOp::GreaterThan),
             Token::Ge => Ok(PredicateOp::GreaterEqual),
+            Token::Leu => Ok(PredicateOp::LessEqualUnsigned),
+            Token::Ltu => Ok(PredicateOp::LessThanUnsigned),
+            Token::Equ => Ok(PredicateOp::EqualUnsigned),
+            Token::Neu => Ok(PredicateOp::NotEqualUnsigned),
+            Token::Gtu => Ok(PredicateOp::GreaterThanUnsigned),
+            Token::Geu => Ok(PredicateOp::GreaterEqualUnsigned),
             _ => Err(Diagnostic::error()
                 .with_message(format!("expected `predicate_op`, found `{}`", token))
                 .with_labels(vec![Label::primary(self.file_id, span)])),

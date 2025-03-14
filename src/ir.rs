@@ -126,7 +126,6 @@ pub enum Type {
     Bf16,
     Pred,
     B128,
-    Ptr(Box<Type>),
 }
 
 #[derive(Debug)]
@@ -150,11 +149,16 @@ pub struct Parameter {
 
 #[derive(Debug)]
 pub enum Opcode {
+    Abs {
+        ty: Type,
+        ftz: bool,
+    },
     Ex2 {
         ty: Type,
         /// flush-to-zero
         ftz: bool,
     },
+    Rem(Type),
     Fma {
         rounding: Option<FloatRoundingMode>,
         ty: Type,
@@ -167,8 +171,14 @@ pub enum Opcode {
         ftz: bool,
         sat: bool,
     },
+    Rcp {
+        ty: Type,
+        ftz: bool,
+        approx: bool,
+    },
     Neg(Type),
     Max(Type),
+    Min(Type),
     Shfl(Type),
     Bar {
         thread: u32,
@@ -339,10 +349,17 @@ pub enum PredicateOp {
     GreaterEqual,
     Equal,
     NotEqual,
+    EqualUnsigned,
+    NotEqualUnsigned,
+    LessThanUnsigned,
+    LessEqualUnsigned,
+    GreaterThanUnsigned,
+    GreaterEqualUnsigned,
 }
 
 #[derive(Debug)]
 pub enum Shape3 {
+    M16N8K8,
     M16N8K16,
     M16N8K32,
 }

@@ -19,9 +19,15 @@ macro_rules! test_kernel {
 
 test_kernel!(add);
 test_kernel!(flashattention_fwd);
+test_kernel!(flashattention_bwd);
 test_kernel!(add_simple);
 test_kernel!(copy);
 test_kernel!(gemm);
 test_kernel!(fncall);
 test_kernel!(transpose);
+test_kernel!(transform);
 test_kernel!(times_two);
+test_kernel!(matmul);
+test_kernel!(linear);
+test_kernel!(fused_bias_gelu_fwd);
+test_kernel!(fused_bias_gelu_bwd);
