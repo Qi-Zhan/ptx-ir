@@ -1,22 +1,27 @@
+use paste::paste;
 use ptx_ir::Module;
 use std::path::PathBuf;
 
 const KERNEL_PATH: &str = "tests/kernels/";
 
 macro_rules! test_kernel {
-    ($name:ident, $path:expr) => {
-        #[test]
-        fn $name() {
-            let path = PathBuf::from(KERNEL_PATH).join($path);
-            assert!(Module::from_ptx_path(&path).is_ok());
+    ($name:ident) => {
+        paste! {
+            #[test]
+            fn [<test_ $name>]() {
+                let path = PathBuf::from(KERNEL_PATH).join(concat!(stringify!($name), ".ptx"));
+                let result = Module::from_ptx_path(&path);
+                assert!(result.is_ok(), "{}", result.unwrap_err());
+            }
         }
     };
 }
 
-test_kernel!(test_add_kernel, "add.ptx");
-test_kernel!(test_flashattention, "_attn_fwd.ptx");
-test_kernel!(test_add_simple, "add_simple.ptx");
-test_kernel!(test_copy, "copy.ptx");
-test_kernel!(test_gemm, "gemm.ptx");
-test_kernel!(test_fncall, "fncall.ptx");
-test_kernel!(test_transpose, "transpose.ptx");
+test_kernel!(add);
+test_kernel!(flashattention_fwd);
+test_kernel!(add_simple);
+test_kernel!(copy);
+test_kernel!(gemm);
+test_kernel!(fncall);
+test_kernel!(transpose);
+test_kernel!(times_two);
