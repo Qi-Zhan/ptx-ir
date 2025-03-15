@@ -8,6 +8,15 @@ Feel free to make an issue or a pull request if you have any suggestions or impr
 
 ## Getting Started
 
+Add the following to your `Cargo.toml`:
+
+```toml
+[dependencies]
+ptx-ir = "0.1"
+```
+
+## Example
+
 ```rust
 use ptx_ir::Module;
 use std::path::PathBuf;
