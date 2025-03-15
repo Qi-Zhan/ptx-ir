@@ -1,15 +1,10 @@
-use clap::Parser as _;
 use ptx_ir::Module;
 use std::path::PathBuf;
 
-#[derive(Debug, clap::Parser)]
-struct Config {
-    input: PathBuf,
-}
-
 fn main() {
-    let config = Config::parse();
-    match Module::from_ptx_path(&config.input) {
+    let input_path = PathBuf::from(std::env::args().nth(1).expect("missing input file"));
+    let module_result = Module::from_ptx_path(&input_path);
+    match module_result {
         Ok(module) => {
             println!("{:#?}", module);
         }
