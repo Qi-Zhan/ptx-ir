@@ -20,13 +20,15 @@ ptx-ir = "0.1"
 ```rust
 use ptx_ir::Module;
 use std::path::PathBuf;
-let input = PathBuf::from("path/to/your/file.ptx");
-match Module::from_ptx_path(&input) {
-    Ok(module) => {
-        println!("{:#?}", module);
-    }
-    Err(diagnostic) => {
-        println!("{}", diagnostic);
+fn main() {
+    let input = PathBuf::from("path/to/your/file.ptx");
+    match Module::from_ptx_path(&input) {
+        Ok(module) => {
+            println!("{:#?}", module);
+        }
+        Err(diagnostic) => {
+            println!("{}", diagnostic);
+        }
     }
 }
 ```
