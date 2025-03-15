@@ -20,6 +20,7 @@ pub struct Module {
 #[derive(Debug)]
 pub enum Statement {
     Instruction(Instruction),
+    Block(Vec<Statement>),
     Directive(Directive),
     Label(String),
 }
@@ -31,7 +32,7 @@ pub struct Instruction {
     pub predicate: Option<Predicate>,
     pub opcode: Opcode,
     pub operands: Vec<Operand>,
-    pub(crate) span: Span,
+    pub span: Span,
 }
 
 #[derive(Debug)]
@@ -68,7 +69,7 @@ pub struct VariableDecl {
     pub vector: Option<u32>,
     pub array: Option<u32>,
     pub init: Option<Operand>,
-    pub(crate) span: Span,
+    pub span: Span,
 }
 
 #[derive(Debug)]
@@ -132,9 +133,9 @@ pub enum Type {
 pub struct Function {
     pub link_directive: Option<LinkingDirective>,
     pub entry: bool,
-    pub noreturn: bool,
     pub name: String,
     pub parameters: Vec<Parameter>,
+    pub return_params: Vec<Parameter>,
     pub body: Vec<Statement>,
 }
 
@@ -149,6 +150,7 @@ pub struct Parameter {
 
 #[derive(Debug)]
 pub enum Opcode {
+    Call(CallInst),
     Abs {
         ty: Type,
         ftz: bool,
@@ -237,6 +239,14 @@ pub enum Opcode {
     Selp(Type),
     Bfe(Type),
     Bra,
+}
+
+#[derive(Debug)]
+pub struct CallInst {
+    pub is_uniform: bool,
+    pub return_operand: Option<Operand>,
+    pub function: String,
+    pub arguments: Vec<Operand>,
 }
 
 /// Operands may be

@@ -74,28 +74,24 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_function(&mut self, tokens: Vec<(Token, Span)>) -> ParseResult<Function> {
+        let return_params = if self.consume_if_match(Token::LeftParen)?.is_some() {
+            self.parse_parameters()?
+        } else {
+            vec![]
+        };
         let (name, _) = self.parse_identifier()?;
         self.consume_or_error(Token::LeftParen)?;
-        let mut parameters = vec![];
         // try to parse function arguments
-        while self.consume_if_match(Token::RightParen)?.is_none() {
-            let parameter = self.parse_parameter()?;
-            parameters.push(parameter);
-        }
+        let parameters = self.parse_parameters()?;
         // ignore xxx
         while self.consume_if_match(Token::LeftBrace)?.is_none() {
             self.next_token("function body")?;
         }
-
-        let mut body = vec![];
-        while self.consume_if_match(Token::RightBrace)?.is_none() {
-            let statement = self.parse_statement()?;
-            body.push(statement);
-        }
+        let body = self.parse_body()?;
         let func = Function {
             link_directive: Some(LinkingDirective::Extern),
-            entry: false,    // assuming default value for now
-            noreturn: false, // assuming default value for now
+            entry: false, // assuming default value for now
+            return_params,
             name,
             parameters,
             body,
@@ -113,15 +109,37 @@ impl<'a> Parser<'a> {
             self.next_token("label")?;
             self.consume_or_error(Token::Colon)?;
             Ok(Statement::Label(name))
+        } else if self.consume_if_match(Token::LeftBrace)?.is_some() {
+            let body = self.parse_body()?;
+            Ok(Statement::Block(body))
         } else {
             let instruction = self.parse_instruction()?;
             Ok(Statement::Instruction(instruction))
         }
     }
 
+    /// parse a list of statements until '}', assuming '{' is already consumed
+    fn parse_body(&mut self) -> ParseResult<Vec<Statement>> {
+        let mut body = vec![];
+        while self.consume_if_match(Token::RightBrace)?.is_none() {
+            let statement = self.parse_statement()?;
+            body.push(statement);
+        }
+        Ok(body)
+    }
+
+    /// Parse a list of parameters until ')', assuming `(` is already consumed
+    fn parse_parameters(&mut self) -> ParseResult<Vec<Parameter>> {
+        let mut parameters = vec![];
+        while self.consume_if_match(Token::RightParen)?.is_none() {
+            let parameter = self.parse_parameter()?;
+            parameters.push(parameter);
+        }
+        Ok(parameters)
+    }
+
     fn parse_parameter(&mut self) -> ParseResult<Parameter> {
-        // TODO: we assume the Token::Param is always present first
-        self.consume_or_error(Token::Param)?;
+        let _ = self.consume_reg_or_param()?;
         let (token, span) = self.next_token("type")?;
         let ty = self.parse_type(token, span, "funtion parameter")?;
         let mut directives = vec![];
@@ -144,6 +162,17 @@ impl<'a> Parser<'a> {
             ty,
         };
         self.build_parameter(parameter, directives)
+    }
+
+    fn consume_reg_or_param(&mut self) -> ParseResult<StateSpace> {
+        let (token, span) = self.next_token("state_space")?;
+        match token {
+            Token::Reg => Ok(StateSpace::Reg),
+            Token::Param => Ok(StateSpace::Param),
+            _ => Err(Diagnostic::error()
+                .with_message(format!("expected `reg` or `param`, found `{}`", token))
+                .with_labels(vec![Label::primary(self.file_id, span)])),
+        }
     }
 
     fn parse_type(&self, token: Token, span: Span, error_msg: &str) -> ParseResult<Type> {
@@ -232,21 +261,24 @@ impl<'a> Parser<'a> {
         } else {
             None
         };
-
         let (opcode, opcode_span) = self.parse_opcode()?;
-        let mut operands = vec![];
-        while self.consume_if_match(Token::Semicolon)?.is_none() {
-            let operand = self.parse_operand()?;
-            operands.push(operand);
-            self.consume_if_match(Token::Comma)?;
-        }
-
+        let operands = self.parse_operands(Token::Semicolon)?;
         Ok(Instruction {
             predicate,
             opcode,
             operands,
             span: opcode_span,
         })
+    }
+
+    fn parse_operands(&mut self, end: Token) -> ParseResult<Vec<Operand>> {
+        let mut operands = vec![];
+        while self.consume_if_match(end.clone())?.is_none() {
+            let operand = self.parse_operand()?;
+            operands.push(operand);
+            self.consume_if_match(Token::Comma)?;
+        }
+        Ok(operands)
     }
 
     /// Parse a predicate, assuming `@` is already consumed
@@ -278,6 +310,7 @@ impl<'a> Parser<'a> {
         }
     }
 
+    /// Parse an operand
     fn parse_operand(&mut self) -> ParseResult<Operand> {
         if self.consume_if_match(Token::LeftBracket)?.is_some() {
             let operand = self.parse_address_operand()?;
@@ -343,6 +376,30 @@ impl<'a> Parser<'a> {
                 let ftz = self.consume_if_match(Token::Ftz)?.is_some();
                 let ty = self.next_type("opcode")?;
                 Opcode::Rcp { approx, ftz, ty }
+            }
+            Token::Call => {
+                let is_uniform = self.consume_if_match(Token::Uni)?.is_some();
+                let return_operand = if self.consume_if_match(Token::LeftParen)?.is_some() {
+                    let operand = self.parse_operand()?;
+                    self.consume_or_error(Token::RightParen)?;
+                    self.consume_or_error(Token::Comma)?;
+                    Some(operand)
+                } else {
+                    None
+                };
+                let (function, _) = self.parse_identifier()?;
+                let arguments = if self.consume_if_match(Token::Comma)?.is_some() {
+                    self.consume_or_error(Token::LeftParen)?;
+                    self.parse_operands(Token::RightParen)?
+                } else {
+                    vec![]
+                };
+                Opcode::Call(CallInst {
+                    is_uniform,
+                    function,
+                    return_operand,
+                    arguments,
+                })
             }
             Token::Rem => Opcode::Rem(self.next_type("opcode")?),
             Token::Mov => Opcode::Mov(self.next_type("opcode")?),
@@ -785,6 +842,7 @@ impl<'a> Parser<'a> {
                 Token::Entry => {
                     func.entry = true;
                 }
+                Token::Func => {}
                 Token::Extern => {
                     func.link_directive = Some(LinkingDirective::Extern);
                 }
@@ -831,6 +889,9 @@ impl<'a> Parser<'a> {
                 }
                 Token::Align(align) => {
                     variable.alignment = Some(align);
+                }
+                Token::Param => {
+                    variable.state_space = Some(StateSpace::Param);
                 }
                 _ => {
                     // assume it is a type

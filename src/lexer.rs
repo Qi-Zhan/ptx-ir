@@ -733,6 +733,7 @@ impl Token {
                 | Token::Ptr
                 | Token::Type
                 | Token::Reg
+                | Token::Param
                 | Token::Async
                 | Token::Sync
                 | Token::Aligned
