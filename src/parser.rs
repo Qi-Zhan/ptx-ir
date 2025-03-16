@@ -687,8 +687,11 @@ impl<'a> Parser<'a> {
         }
     }
 
+    /// Parse the address size directive. If the .address_size directive is omitted, the address size defaults to 32
     fn parse_address_size(&mut self) -> ParseResult<AddressSize> {
-        self.consume_or_error(Token::AddressSize)?;
+        if self.consume_if_match(Token::AddressSize)?.is_none() {
+            return Ok(AddressSize::Bits32);
+        }
         let (token, span) = self.next_token("constant")?;
         match token {
             Token::DecimalConstant(64) => Ok(AddressSize::Bits64),
