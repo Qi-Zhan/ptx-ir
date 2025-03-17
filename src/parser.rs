@@ -447,6 +447,7 @@ impl<'a> Parser<'a> {
                 };
                 Opcode::St(ty)
             }
+            Token::Exit => Opcode::Exit,
             Token::And => Opcode::And(self.next_type("opcode")?),
             Token::Or => Opcode::Or(self.next_type("opcode")?),
             Token::Xor => Opcode::XOr(self.next_type("opcode")?),

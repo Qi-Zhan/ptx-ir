@@ -150,6 +150,7 @@ pub struct Parameter {
 
 #[derive(Debug)]
 pub enum Opcode {
+    Exit,
     Call(CallInst),
     Abs {
         ty: Type,

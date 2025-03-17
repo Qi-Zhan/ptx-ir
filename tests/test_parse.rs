@@ -31,3 +31,23 @@ test_kernel!(matmul);
 test_kernel!(linear);
 test_kernel!(fused_bias_gelu_fwd);
 test_kernel!(fused_bias_gelu_bwd);
+
+fn test_directory(path: &str) {
+    let path = PathBuf::from(KERNEL_PATH).join(path);
+    for entry in std::fs::read_dir(path).unwrap() {
+        let entry = entry.unwrap();
+        let path = entry.path();
+        if path.is_file() && path.extension().unwrap() == "ptx" {
+            let result = Module::from_ptx_path(&path);
+            assert!(result.is_ok(), "{}", result.unwrap_err());
+        }
+    }
+}
+
+mod gpuocelot {
+    use super::test_directory;
+    #[test]
+    fn test_parboil() {
+        test_directory("gpuocelot/parboil");
+    }
+}
