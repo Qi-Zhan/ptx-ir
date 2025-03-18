@@ -6,7 +6,7 @@
 //! use ptx_ir::Module;
 //! use std::path::PathBuf;
 //!
-//! let input = PathBuf::from("tests/kernels/add.ptx");
+//! let input = PathBuf::from("tests/kernels/simple/add.ptx");
 //! match Module::from_ptx_path(&input) {
 //!     Ok(module) => {
 //!         println!("{:#?}", module);

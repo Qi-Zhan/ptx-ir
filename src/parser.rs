@@ -1,9 +1,10 @@
 use crate::ir::*;
 use crate::lexer::Token;
 use codespan_reporting::diagnostic::{Diagnostic, Label};
+use either::Either;
 use logos::{Logos as _, Span};
 
-pub struct Parser<'a> {
+pub(crate) struct Parser<'a> {
     file_id: usize,
     tokens: std::iter::Peekable<logos::SpannedIter<'a, Token>>,
 }
@@ -11,14 +12,14 @@ pub struct Parser<'a> {
 type ParseResult<T> = Result<T, Diagnostic<usize>>;
 
 impl<'a> Parser<'a> {
-    pub fn new(file_id: usize, source: &'a str) -> Self {
+    pub(crate) fn new(file_id: usize, source: &'a str) -> Self {
         Self {
             file_id,
             tokens: Token::lexer(source).spanned().peekable(),
         }
     }
 
-    pub fn parse(&mut self) -> ParseResult<Module> {
+    pub(crate) fn parse(&mut self) -> ParseResult<Module> {
         let version = self.parse_version()?;
         let target = self.parse_target()?;
         let address_size = self.parse_address_size()?;
@@ -48,14 +49,19 @@ impl<'a> Parser<'a> {
                 let (name, _) = self.parse_string()?;
                 self.consume_if_match(Token::Semicolon)?;
                 return Ok(Directive::Pragma(name));
+            } else if let Token::File = token {
+                let (num, _) = self.parse_integer()?;
+                let (name, _) = self.parse_string()?;
+                self.consume_if_match(Token::Semicolon)?;
+                return Ok(Directive::File(num as usize, name));
             }
 
             tokens.push((token.clone(), span));
             // .entry or .func
             if token.is_function() {
-                return Ok(Directive::Function(self.parse_function(tokens)?));
+                return self.parse_function(tokens);
             }
-            if let Token::Identifier(_) = token {
+            if token.can_be_id() {
                 return Ok(Directive::Variable(
                     self.parse_variable_declaration(tokens)?,
                 ));
@@ -73,21 +79,30 @@ impl<'a> Parser<'a> {
         Ok(Directive::Section)
     }
 
-    fn parse_function(&mut self, tokens: Vec<(Token, Span)>) -> ParseResult<Function> {
+    fn parse_function(&mut self, tokens: Vec<(Token, Span)>) -> ParseResult<Directive> {
         let return_params = if self.consume_if_match(Token::LeftParen)?.is_some() {
             self.parse_parameters()?
         } else {
             vec![]
         };
-        let (name, _) = self.parse_identifier()?;
-        self.consume_or_error(Token::LeftParen)?;
+        let (name, _) = self.next_identifier()?;
         // try to parse function arguments
-        let parameters = self.parse_parameters()?;
-        // ignore xxx
-        while self.consume_if_match(Token::LeftBrace)?.is_none() {
-            self.next_token("function body")?;
-        }
-        let body = self.parse_body()?;
+        let parameters = if self.consume_if_match(Token::LeftParen)?.is_some() {
+            self.parse_parameters()?
+        } else {
+            vec![]
+        };
+        // ignore many things, TODO
+        self.consume_if_match(Token::ReqNTid)?;
+        self.consume_if_match(Token::MaxNTid)?;
+        self.consume_if_match(Token::MinNCTapersm)?;
+        // try to parse function body
+        let (body, decl) = if self.consume_if_match(Token::LeftBrace)?.is_some() {
+            let body = self.parse_body()?;
+            (body, false)
+        } else {
+            (vec![], true)
+        };
         let func = Function {
             link_directive: Some(LinkingDirective::Extern),
             entry: false, // assuming default value for now
@@ -96,7 +111,13 @@ impl<'a> Parser<'a> {
             parameters,
             body,
         };
-        self.build_function(func, tokens)
+        let func = self.build_function(func, tokens);
+        if decl {
+            self.consume_if_match(Token::Semicolon)?;
+            func.map(Directive::FunctionDecl)
+        } else {
+            func.map(Directive::Function)
+        }
     }
 
     fn parse_statement(&mut self) -> ParseResult<Statement> {
@@ -105,7 +126,6 @@ impl<'a> Parser<'a> {
             let directive = self.parse_directive()?;
             Ok(Statement::Directive(directive))
         } else if let Token::Identifier(name) = token {
-            // label
             self.next_token("label")?;
             self.consume_or_error(Token::Colon)?;
             Ok(Statement::Label(name))
@@ -139,40 +159,30 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_parameter(&mut self) -> ParseResult<Parameter> {
-        let _ = self.consume_reg_or_param()?;
-        let (token, span) = self.next_token("type")?;
-        let ty = self.parse_type(token, span, "funtion parameter")?;
         let mut directives = vec![];
-        while self.consume_if_match(Token::Comma)?.is_none() && !self.if_match(Token::RightParen)? {
-            directives.push(self.next_token("parameter_name")?);
-        }
-        let (name, span) = directives.pop().unwrap();
-        let name = if let Token::Identifier(name) = name {
-            name
-        } else {
-            return Err(Diagnostic::error()
-                .with_message(format!("expected `identifier`, found `{}`", name))
-                .with_labels(vec![Label::primary(self.file_id, span)]));
+        let name = loop {
+            let token = self.next_token("parameter")?;
+            if let Token::Identifier(param_name) = token.0 {
+                break param_name; // Instead of `break name`, it should break `param_name`
+            }
+            directives.push(token);
         };
-        let parameter = Parameter {
+        let mut parameter = Parameter {
             state_space: None,
             ptr: false,
             alignment: None,
             name,
-            ty,
+            array: None,
+            ty: Type::U32,
         };
-        self.build_parameter(parameter, directives)
-    }
-
-    fn consume_reg_or_param(&mut self) -> ParseResult<StateSpace> {
-        let (token, span) = self.next_token("state_space")?;
-        match token {
-            Token::Reg => Ok(StateSpace::Reg),
-            Token::Param => Ok(StateSpace::Param),
-            _ => Err(Diagnostic::error()
-                .with_message(format!("expected `reg` or `param`, found `{}`", token))
-                .with_labels(vec![Label::primary(self.file_id, span)])),
+        if self.consume_if_match(Token::LeftBracket)?.is_some() {
+            let (token, _) = self.parse_integer()?;
+            let array = token as u32;
+            parameter.array = Some(array);
+            self.consume_or_error(Token::RightBracket)?;
         }
+        self.consume_if_match(Token::Comma)?;
+        self.build_parameter(parameter, directives)
     }
 
     fn parse_type(&self, token: Token, span: Span, error_msg: &str) -> ParseResult<Type> {
@@ -197,6 +207,8 @@ impl<'a> Parser<'a> {
             Token::Bf16 => Ok(Type::Bf16),
             Token::Tf32 => Ok(Type::Tf32),
             Token::Pred => Ok(Type::Pred),
+            // TODO: fix these
+            Token::TexRef | Token::SamplerRef | Token::SurfRef => Ok(Type::U32),
             _ => Err(Diagnostic::error()
                 .with_message(format!("expected `type` in {error_msg}, found `{}`", token))
                 .with_labels(vec![Label::primary(self.file_id, span)])),
@@ -210,49 +222,45 @@ impl<'a> Parser<'a> {
         mut tokens: Vec<(Token, Span)>,
     ) -> ParseResult<VariableDecl> {
         let (name, span) = tokens.pop().unwrap();
-        if let Token::Identifier(name) = name {
-            let mut variable = VariableDecl {
-                name,
-                ty: Type::U32,
-                state_space: None,
-                linkage: None,
-                vector: None,
-                alignment: None,
-                array: None,
-                init: None,
-                span,
-            };
-            variable = self.build_variable_prefix(variable, tokens)?;
-            // check if %p<...> is present
-            if (self.consume_if_match(Token::LessThan)?).is_some() {
-                let (token, _) = self.parse_integer()?;
-                variable.vector = Some(token as u32);
-                self.consume_or_error(Token::GreaterThan)?;
-            }
-            if self.consume_if_match(Token::LeftBracket)?.is_some() {
-                let num = if self.consume_if_match(Token::RightBracket)?.is_none() {
-                    let (token, _) = self.parse_integer()?;
-                    variable.array = Some(token as u32);
-                    self.consume_or_error(Token::RightBracket)?;
-                    token as u32
-                } else {
-                    0
-                };
-                variable.array = Some(num);
-            }
-            // initialize
-            if self.consume_if_match(Token::Assign)?.is_some() {
-                let init = self.parse_operand()?;
-                variable.init = Some(init);
-            }
-            self.consume_or_error(Token::Semicolon)?;
-
-            Ok(variable)
-        } else {
-            Err(Diagnostic::error()
-                .with_message(format!("expected `identifier`, found `{}`", name))
-                .with_labels(vec![Label::primary(self.file_id, span)]))
+        let (name, span) = self.parse_identifier(name, span)?;
+        let mut variable = VariableDecl {
+            name,
+            ty: Type::U32,
+            state_space: None,
+            linkage: None,
+            vector: None,
+            alignment: None,
+            array: None,
+            init: None,
+            span,
+        };
+        variable = self.build_variable_prefix(variable, tokens)?;
+        // check if %p<...> is present
+        if (self.consume_if_match(Token::LessThan)?).is_some() {
+            let (token, _) = self.parse_integer()?;
+            variable.vector = Some(token as u32);
+            self.consume_or_error(Token::GreaterThan)?;
         }
+        if self.consume_if_match(Token::LeftBracket)?.is_some() {
+            let num = if self.consume_if_match(Token::RightBracket)?.is_none() {
+                let (token, _) = self.parse_integer()?;
+                variable.array = Some(token as u32);
+                self.consume_or_error(Token::RightBracket)?;
+                token as u32
+            } else {
+                // TODO
+                0
+            };
+            variable.array = Some(num);
+        }
+        // initialize
+        if self.consume_if_match(Token::Assign)?.is_some() {
+            let init = self.parse_operand()?;
+            variable.init = Some(init);
+        }
+        self.consume_or_error(Token::Semicolon)?;
+
+        Ok(variable)
     }
 
     fn parse_instruction(&mut self) -> ParseResult<Instruction> {
@@ -283,7 +291,7 @@ impl<'a> Parser<'a> {
 
     /// Parse a predicate, assuming `@` is already consumed
     fn parse_predicate(&mut self) -> ParseResult<Predicate> {
-        let negated = self.consume_if_match(Token::Not)?.is_some();
+        let negated = self.consume_if_match(Token::LogicalNot)?.is_some();
         let (token, span) = self.next_token("predicate")?;
         let register = self.parse_register(token, span)?;
         Ok(Predicate { register, negated })
@@ -292,18 +300,23 @@ impl<'a> Parser<'a> {
     fn parse_register(&mut self, token: Token, span: Span) -> ParseResult<Register> {
         match token {
             Token::Identifier(name) => Ok(Register::Identifier(name, span)),
+            Token::NCTAId => Ok(Register::Special(SpecialReg::GridDim, span)),
+            Token::NCTAIdX => Ok(Register::Special(SpecialReg::GridDimX, span)),
+            Token::NCTAIdY => Ok(Register::Special(SpecialReg::GridDimY, span)),
+            Token::NCTAIdZ => Ok(Register::Special(SpecialReg::GridDimZ, span)),
+            Token::CTAId => Ok(Register::Special(SpecialReg::BlockIdx, span)),
+            Token::CTAIdX => Ok(Register::Special(SpecialReg::BlockIdxX, span)),
+            Token::CTAIdY => Ok(Register::Special(SpecialReg::BlockIdxY, span)),
+            Token::CTAIdZ => Ok(Register::Special(SpecialReg::BlockIdxZ, span)),
             Token::TId => Ok(Register::Special(SpecialReg::ThreadId, span)),
-            Token::CTAId => Ok(Register::Special(SpecialReg::CtaId, span)),
-            Token::CTAIdX => Ok(Register::Special(SpecialReg::CtaIdX, span)),
-            Token::CTAIdY => Ok(Register::Special(SpecialReg::CtaIdY, span)),
-            Token::CTAIdZ => Ok(Register::Special(SpecialReg::CtaIdZ, span)),
             Token::TIdX => Ok(Register::Special(SpecialReg::ThreadIdX, span)),
             Token::TIdY => Ok(Register::Special(SpecialReg::ThreadIdY, span)),
             Token::TIdZ => Ok(Register::Special(SpecialReg::ThreadIdZ, span)),
-            Token::NTId => Ok(Register::Special(SpecialReg::NumThread, span)),
-            Token::NTIdX => Ok(Register::Special(SpecialReg::NumThreadX, span)),
-            Token::NTIdY => Ok(Register::Special(SpecialReg::NumThreadY, span)),
-            Token::NTIdZ => Ok(Register::Special(SpecialReg::NumThreadZ, span)),
+            Token::NTId => Ok(Register::Special(SpecialReg::BlockDim, span)),
+            Token::NTIdX => Ok(Register::Special(SpecialReg::BlockDimX, span)),
+            Token::NTIdY => Ok(Register::Special(SpecialReg::BlockDimY, span)),
+            Token::NTIdZ => Ok(Register::Special(SpecialReg::BlockDimZ, span)),
+            Token::Clock => Ok(Register::Special(SpecialReg::Clock, span)),
             _ => Err(Diagnostic::error()
                 .with_message(format!("expected `register`, found `{}`", token))
                 .with_labels(vec![Label::primary(self.file_id, span)])),
@@ -312,9 +325,10 @@ impl<'a> Parser<'a> {
 
     /// Parse an operand
     fn parse_operand(&mut self) -> ParseResult<Operand> {
-        if self.consume_if_match(Token::LeftBracket)?.is_some() {
+        if self.consume_if_match(Token::Underscore)?.is_some() {
+            Ok(Operand::PlaceHolder)
+        } else if self.consume_if_match(Token::LeftBracket)?.is_some() {
             let operand = self.parse_address_operand()?;
-            self.consume_or_error(Token::RightBracket)?;
             Ok(Operand::Address(operand))
         } else if self.consume_if_match(Token::LeftBrace)?.is_some() {
             let mut elements = vec![];
@@ -330,7 +344,12 @@ impl<'a> Parser<'a> {
                 Ok(Operand::Constant(constant))
             } else {
                 let register = self.parse_register(token, span)?;
-                Ok(Operand::Register(register))
+                if self.consume_if_match(Token::Plus)?.is_some() {
+                    let (number, _) = self.parse_integer()?;
+                    Ok(Operand::RegisterOffset(register, number))
+                } else {
+                    Ok(Operand::Register(register))
+                }
             }
         }
     }
@@ -352,13 +371,27 @@ impl<'a> Parser<'a> {
 
     fn parse_address_operand(&mut self) -> ParseResult<AddressOperand> {
         // assume there is identifier
-        let (identifier, _) = self.parse_identifier()?;
+        let (identifier, span) = self.next_identifier()?;
         if self.if_match(Token::RightBracket)? {
+            self.consume_or_error(Token::RightBracket)?;
             Ok(AddressOperand::Address(identifier))
-        } else {
-            self.consume_or_error(Token::Plus)?;
+        } else if self.consume_if_match(Token::Plus)?.is_some() {
             let (number, _) = self.parse_integer()?;
+            self.consume_or_error(Token::RightBracket)?;
             Ok(AddressOperand::AddressOffset(identifier, number))
+        } else if self.consume_if_match(Token::Comma)?.is_some() {
+            // [texCoors,{%f11,%f13,%f15,%f17}]
+            let mut operands = vec![];
+            while self.consume_if_match(Token::RightBracket)?.is_none() {
+                let operand = self.parse_operand()?;
+                operands.push(operand);
+                self.consume_if_match(Token::Comma)?;
+            }
+            Ok(AddressOperand::List(identifier, operands))
+        } else {
+            Err(Diagnostic::error()
+                .with_message("expected `]`, `+`, or `,`")
+                .with_labels(vec![Label::primary(self.file_id, span)]))
         }
     }
 
@@ -371,12 +404,6 @@ impl<'a> Parser<'a> {
                 let ty = self.next_type("opcode")?;
                 Opcode::Abs { ftz, ty }
             }
-            Token::Rcp => {
-                let approx = self.consume_if_match(Token::Approx)?.is_some();
-                let ftz = self.consume_if_match(Token::Ftz)?.is_some();
-                let ty = self.next_type("opcode")?;
-                Opcode::Rcp { approx, ftz, ty }
-            }
             Token::Call => {
                 let is_uniform = self.consume_if_match(Token::Uni)?.is_some();
                 let return_operand = if self.consume_if_match(Token::LeftParen)?.is_some() {
@@ -387,28 +414,40 @@ impl<'a> Parser<'a> {
                 } else {
                     None
                 };
-                let (function, _) = self.parse_identifier()?;
+                let (function, _) = self.next_identifier()?;
                 let arguments = if self.consume_if_match(Token::Comma)?.is_some() {
                     self.consume_or_error(Token::LeftParen)?;
                     self.parse_operands(Token::RightParen)?
                 } else {
                     vec![]
                 };
+                let fproto = if self.consume_if_match(Token::Comma)?.is_some() {
+                    Some(self.next_identifier()?.0)
+                } else {
+                    None
+                };
                 Opcode::Call(CallInst {
                     is_uniform,
                     function,
                     return_operand,
                     arguments,
+                    fproto,
                 })
             }
             Token::Rem => Opcode::Rem(self.next_type("opcode")?),
             Token::Mov => Opcode::Mov(self.next_type("opcode")?),
+            Token::Lg2 => {
+                self.consume_or_error(Token::Approx)?;
+                let ftz = self.consume_if_match(Token::Ftz)?.is_some();
+                let ty = self.next_type("opcode")?;
+                Opcode::Lg2 { ftz, ty }
+            }
             Token::Mul => {
                 let mode = self.parse_mul_mode()?;
-                let ty = self.next_type("opcode")?;
-                let rounding = self.parse_round_mode()?;
+                let rounding = self.parse_float_round_mode()?;
                 let ftz = self.consume_if_match(Token::Ftz)?.is_some();
                 let saturate = self.consume_if_match(Token::Saturate)?.is_some();
+                let ty = self.next_type("opcode")?;
                 Opcode::Mul {
                     ty,
                     mode,
@@ -417,16 +456,117 @@ impl<'a> Parser<'a> {
                     saturate,
                 }
             }
-            Token::Add => Opcode::Add(self.next_type("opcode")?),
-            Token::Sub => Opcode::Sub(self.next_type("opcode")?),
-            Token::Div => {
-                self.consume_if_match(Token::Full)?;
+            Token::Mul24 => {
+                let mode = self.parse_mul_mode()?;
+                let ty = self.next_type("opcode")?;
+                Opcode::Mul24 { ty, mode }
+            }
+            Token::Add => {
+                // add{.rnd}{.ftz}{.sat}.f16   d, a, b;
+                let rnd = self.consume_if_match(Token::Rn)?.is_some();
+                let ftz = self.consume_if_match(Token::Ftz)?.is_some();
+                let saturate = self.consume_if_match(Token::Saturate)?.is_some();
+                let ty = self.next_type("opcode")?;
+                Opcode::Add {
+                    rnd,
+                    ftz,
+                    saturate,
+                    ty,
+                }
+            }
+            Token::Sub => {
                 let ftz = self.consume_if_match(Token::Ftz)?.is_some();
                 let ty = self.next_type("opcode")?;
-                Opcode::Div { ftz, ty }
+                Opcode::Sub { ftz, ty }
+            }
+            Token::Div => {
+                let full = self.consume_if_match(Token::Full)?.is_some();
+                let approx = self.consume_if_match(Token::Approx)?.is_some();
+                let rounding = self.parse_float_round_mode()?;
+                let ftz = self.consume_if_match(Token::Ftz)?.is_some();
+                let ty = self.next_type("opcode")?;
+                Opcode::Div {
+                    ftz,
+                    approx,
+                    rounding,
+                    full,
+                    ty,
+                }
+            }
+            Token::Sqrt => {
+                let approx = self.consume_if_match(Token::Approx)?.is_some();
+                let rounding = self.parse_float_round_mode()?;
+                let ftz = self.consume_if_match(Token::Ftz)?.is_some();
+                let ty = self.next_type("opcode")?;
+                Opcode::Sqrt {
+                    approx,
+                    ftz,
+                    rounding,
+                    ty,
+                }
+            }
+            Token::RSqrt => {
+                let approx = self.consume_if_match(Token::Approx)?.is_some();
+                let rounding = self.parse_float_round_mode()?;
+                let ftz = self.consume_if_match(Token::Ftz)?.is_some();
+                let ty = self.next_type("opcode")?;
+                Opcode::RSqrt {
+                    approx,
+                    ftz,
+                    rounding,
+                    ty,
+                }
+            }
+            Token::Sin => {
+                let approx = self.consume_if_match(Token::Approx)?.is_some();
+                let ftz = self.consume_if_match(Token::Ftz)?.is_some();
+                let ty = self.next_type("opcode")?;
+                Opcode::Sin { approx, ftz, ty }
+            }
+            Token::Cos => {
+                let approx = self.consume_if_match(Token::Approx)?.is_some();
+                let ftz = self.consume_if_match(Token::Ftz)?.is_some();
+                let ty = self.next_type("opcode")?;
+                Opcode::Cos { approx, ftz, ty }
+            }
+            Token::Rcp => {
+                let approx = self.consume_if_match(Token::Approx)?.is_some();
+                let rounding = self.parse_float_round_mode()?;
+                let ftz = self.consume_if_match(Token::Ftz)?.is_some();
+                let ty = self.next_type("opcode")?;
+                Opcode::Rcp {
+                    approx,
+                    ftz,
+                    rounding,
+                    ty,
+                }
             }
             Token::Shl => Opcode::Shl(self.next_type("opcode")?),
             Token::Shr => Opcode::Shr(self.next_type("opcode")?),
+            Token::Shf => {
+                let (dir, _) = self.next_token("opcode")?;
+                let direction = match dir {
+                    Token::L => ShfDirection::Left,
+                    Token::R => ShfDirection::Right,
+                    _ => {
+                        return Err(Diagnostic::error()
+                            .with_message(format!("expected `L` or `R`, found `{}`", dir))
+                            .with_labels(vec![Label::primary(self.file_id, span)]));
+                    }
+                };
+                let (mode, _) = self.next_token("opcode")?;
+                let mode = match mode {
+                    Token::Clamp => ShfMode::Clamp,
+                    Token::Wrap => ShfMode::Wrap,
+                    _ => {
+                        return Err(Diagnostic::error()
+                            .with_message(format!("expected `clamp` or `wrap`, found `{}`", mode))
+                            .with_labels(vec![Label::primary(self.file_id, span)]));
+                    }
+                };
+                self.consume_or_error(Token::B32)?;
+                Opcode::Shf { direction, mode }
+            }
             Token::Ld => {
                 // TODO: correct this
                 let ty = loop {
@@ -436,6 +576,27 @@ impl<'a> Parser<'a> {
                     }
                 };
                 Opcode::Ld(ty)
+            }
+            Token::Ldu => {
+                // TODO: correct this
+                let ty = loop {
+                    let (token, span) = self.next_token("opcode")?;
+                    if let Ok(ty) = self.parse_type(token, span, "opcode") {
+                        break ty;
+                    }
+                };
+                Opcode::Ldu(ty)
+            }
+            Token::Tex => {
+                // TODO: correct this
+                let ty1 = loop {
+                    let (token, span) = self.next_token("opcode")?;
+                    if let Ok(ty) = self.parse_type(token, span, "opcode") {
+                        break ty;
+                    }
+                };
+                let ty2 = self.next_type("opcode")?;
+                Opcode::Tex(ty1, ty2)
             }
             Token::St => {
                 // TODO: correct this
@@ -448,10 +609,48 @@ impl<'a> Parser<'a> {
                 Opcode::St(ty)
             }
             Token::Exit => Opcode::Exit,
+            Token::Vote => {
+                self.next_token("opcode")?;
+                let ty = self.next_type("opcode")?;
+                Opcode::Vote(ty)
+            }
+            Token::PopC => Opcode::PopC(self.next_type("opcode")?),
+            Token::Atom => {
+                // TODO: fix
+                let ty = loop {
+                    let (token, span) = self.next_token("opcode")?;
+                    if let Ok(ty) = self.parse_type(token, span, "opcode") {
+                        break ty;
+                    }
+                };
+                Opcode::Atom(ty)
+            }
+            Token::Slct => {
+                let ftz = self.consume_if_match(Token::Ftz)?.is_some();
+                let dtype = self.next_type("opcode")?;
+                let stype = self.next_type("opcode")?;
+                Opcode::Slct { ftz, dtype, stype }
+            }
             Token::And => Opcode::And(self.next_type("opcode")?),
             Token::Or => Opcode::Or(self.next_type("opcode")?),
             Token::Xor => Opcode::XOr(self.next_type("opcode")?),
             Token::Setp => Opcode::Setp(self.parse_predicate_op()?, self.next_type("opcode")?),
+            // set.CmpOp{.ftz}.dtype.stype         d, a, b;
+            // TODO: set.CmpOp.BoolOp{.ftz}.dtype.stype  d, a, b, {!}c;
+            Token::Set => {
+                let cmp_op = self.parse_predicate_op()?;
+                let ftz = self.consume_if_match(Token::Ftz)?.is_some();
+                let dtype = self.next_type("opcode")?;
+                let stype = self.next_type("opcode")?;
+                Opcode::Set {
+                    cmp_op,
+                    ftz,
+                    dtype,
+                    stype,
+                }
+            }
+            Token::Clz => Opcode::Clz(self.next_type("opcode")?),
+            Token::Not => Opcode::Not(self.next_type("opcode")?),
             Token::SelP => Opcode::Selp(self.next_type("opcode")?),
             Token::Ret => Opcode::Ret,
             Token::Bar => {
@@ -469,9 +668,13 @@ impl<'a> Parser<'a> {
                 let ty = self.next_type("opcode")?;
                 Opcode::Shfl(ty)
             }
-            Token::Neg => Opcode::Neg(self.next_type("opcode")?),
+            Token::Neg => {
+                let ftz = self.consume_if_match(Token::Ftz)?.is_some();
+                let ty = self.next_type("opcode")?;
+                Opcode::Neg { ftz, ty }
+            }
             Token::Fma => {
-                let rounding = self.parse_round_mode()?;
+                let rounding = self.parse_float_round_mode()?;
                 let ftz = self.consume_if_match(Token::Ftz)?.is_some();
                 let ty = self.next_type("opcode")?;
                 Opcode::Fma { rounding, ftz, ty }
@@ -504,7 +707,7 @@ impl<'a> Parser<'a> {
             // integer: mad.mode{.sat}.s32  d, a, b, c;
             Token::Mad => {
                 let mode = self.parse_mul_mode()?;
-                let rounding = self.parse_round_mode()?;
+                let rounding = self.parse_float_round_mode()?;
                 let ftz = self.consume_if_match(Token::Ftz)?.is_some();
                 let sat = self.consume_if_match(Token::Saturate)?.is_some();
                 let ty = self.next_type("opcode")?;
@@ -546,10 +749,19 @@ impl<'a> Parser<'a> {
                 Opcode::Cp
             }
             Token::Cvt => {
-                let rounding = self.parse_round_mode()?;
+                let rounding = self
+                    .parse_float_round_mode()?
+                    .map(Either::Left)
+                    .xor(self.parse_integer_round_mode()?.map(Either::Right));
+                let saturate = self.consume_if_match(Token::Saturate)?.is_some();
                 let from = self.next_type("opcode")?;
                 let to = self.next_type("opcode")?;
-                Opcode::Cvt { from, to, rounding }
+                Opcode::Cvt {
+                    from,
+                    to,
+                    rounding,
+                    saturate,
+                }
             }
             Token::Cvta => {
                 let to = self.consume_if_match(Token::To)?.is_some();
@@ -562,6 +774,46 @@ impl<'a> Parser<'a> {
                 }
             }
             Token::Bfe => Opcode::Bfe(self.next_type("opcode")?),
+            Token::Membar => {
+                // TODO
+                self.next_token("opcode")?;
+                Opcode::Membar
+            }
+            // // no input or return parameters
+            // label: .callprototype _ .noreturn;
+            // // input params, no return params
+            // label: .callprototype _ (param-list) .noreturn;
+            // // no input params, // return params
+            // label: .callprototype (ret-param) _ ;
+            // // input, return parameters
+            // label: .callprototype (ret-param) _ (param-list);
+            Token::CallPrototype => {
+                // let return_params = if self.consume_if_match(Token::LeftParen)?.is_some() {
+                //     self.parse_parameters()?
+                // } else {
+                //     vec![]
+                // };
+                // self.consume_or_error(Token::Underscore)?;
+                // let no_return = self.consume_if_match(Token::NoReturn)?.is_some();
+                // let parameters = if self.consume_if_match(Token::LeftParen)?.is_some() {
+                //     self.parse_parameters()?
+                // } else {
+                //     vec![]
+                // };
+                // TODO:
+                while self.cur_token()? != Token::Semicolon {
+                    self.next_token("opcode")?;
+                }
+                Opcode::CallPrototype {
+                    // return_params,
+                    // no_return,
+                    // parameters,
+                }
+            }
+            Token::IsSpaceP => {
+                let state_space = self.parse_state_space()?;
+                Opcode::IsSpaceP(state_space)
+            }
             _ => {
                 return Err(Diagnostic::error()
                     .with_message(format!("expected opcode, found `{}`", token))
@@ -616,10 +868,21 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_round_mode(&mut self) -> ParseResult<Option<FloatRoundingMode>> {
+    fn parse_float_round_mode(&mut self) -> ParseResult<Option<FloatRoundingMode>> {
         let token = self.cur_token()?;
         match token {
             Token::Rn | Token::Rna | Token::Rz | Token::Rm | Token::Rp => {
+                self.next_token("round_mode")?;
+                Ok(Some(token.into()))
+            }
+            _ => Ok(None),
+        }
+    }
+
+    fn parse_integer_round_mode(&mut self) -> ParseResult<Option<IntegerRoundingMode>> {
+        let token = self.cur_token()?;
+        match token {
+            Token::Rni | Token::Rzi | Token::Rmi | Token::Rpi => {
                 self.next_token("round_mode")?;
                 Ok(Some(token.into()))
             }
@@ -663,18 +926,27 @@ impl<'a> Parser<'a> {
 
     fn parse_target(&mut self) -> ParseResult<Target> {
         self.consume_or_error(Token::Target)?;
-        let (name, _) = self.parse_identifier()?;
+        let (name, _) = self.next_identifier()?;
+        // ignore the rest mode
+        if self.consume_if_match(Token::Comma)?.is_some() {
+            self.next_token("target")?;
+        }
         Ok(Target(name))
     }
 
-    fn parse_identifier(&mut self) -> ParseResult<(String, Span)> {
-        let (token, span) = self.next_token("identifier")?;
+    fn parse_identifier(&self, token: Token, span: Span) -> ParseResult<(String, Span)> {
         match token {
             Token::Identifier(identifier) => Ok((identifier, span)),
+            Token::Tex => Ok(("tex".to_string(), span)),
             _ => Err(Diagnostic::error()
                 .with_message(format!("expected `identifier`, found `{}`", token))
                 .with_labels(vec![Label::primary(self.file_id, span)])),
         }
+    }
+
+    fn next_identifier(&mut self) -> ParseResult<(String, Span)> {
+        let (token, span) = self.next_token("identifier")?;
+        self.parse_identifier(token, span)
     }
 
     fn parse_mul_mode(&mut self) -> ParseResult<Option<MulMode>> {
@@ -748,15 +1020,9 @@ impl<'a> Parser<'a> {
     /// Check if the next token is the expected token, if so consume it and return the span,
     /// otherwise returns None.
     fn consume_if_match(&mut self, token: Token) -> ParseResult<Option<Span>> {
-        let (cur_token, span) = self
-            .tokens
-            .peek()
-            .ok_or_else(|| {
-                Diagnostic::error().with_message(format!("expected `{}`, found EOF", token))
-            })?
-            .clone();
+        let cur_token = self.tokens.peek().cloned();
         match cur_token {
-            Ok(cur_token) if cur_token == token => {
+            Some((Ok(cur_token), span)) if cur_token == token => {
                 self.tokens.next();
                 Ok(Some(span))
             }
@@ -798,7 +1064,7 @@ impl<'a> Parser<'a> {
             Token::Local => Ok(StateSpace::Local),
             Token::Param => Ok(StateSpace::Param),
             Token::SReg => Ok(StateSpace::SReg),
-            Token::Tex => Ok(StateSpace::Tex),
+            Token::DotTex => Ok(StateSpace::Tex),
             Token::Global => Ok(StateSpace::Global),
             Token::Shared => Ok(StateSpace::Shared),
             _ => Err(Diagnostic::error()
@@ -814,22 +1080,23 @@ impl<'a> Parser<'a> {
     ) -> ParseResult<Parameter> {
         for (token, span) in tokens {
             match token {
+                // TODO: ignore these for now
+                Token::Param | Token::Reg => {}
                 Token::Ptr => {
                     parameter.ptr = true;
                 }
                 Token::Global => {
                     parameter.state_space = Some(StateSpace::Global);
                 }
+                Token::Shared => {
+                    parameter.state_space = Some(StateSpace::Shared);
+                }
                 Token::Align(align) => {
                     parameter.alignment = Some(align);
                 }
                 _ => {
-                    return Err(Diagnostic::error()
-                        .with_message(format!(
-                            "unexpected token, expected directive for parameters, found {}",
-                            token
-                        ))
-                        .with_labels(vec![Label::primary(self.file_id, span)]));
+                    // assume it is a type
+                    parameter.ty = self.parse_type(token, span, "parameter declaration")?;
                 }
             }
         }
@@ -897,10 +1164,15 @@ impl<'a> Parser<'a> {
                 Token::Param => {
                     variable.state_space = Some(StateSpace::Param);
                 }
+                Token::Const => {
+                    variable.state_space = Some(StateSpace::Const);
+                }
+                Token::Local => {
+                    variable.state_space = Some(StateSpace::Local);
+                }
                 _ => {
                     // assume it is a type
-                    let ty = self.parse_type(token, span, "variable declaration")?;
-                    variable.ty = ty;
+                    variable.ty = self.parse_type(token, span, "variable declaration")?;
                 }
             }
         }

@@ -1,6 +1,7 @@
 //! Intermediate representation of PTX code.
 
 use codespan_reporting::{diagnostic::Diagnostic, files::SimpleFiles, term::termcolor::Buffer};
+use either::Either;
 use logos::Span;
 use std::path::Path;
 
@@ -38,10 +39,12 @@ pub struct Instruction {
 #[derive(Debug)]
 pub enum Directive {
     Function(Function),
+    FunctionDecl(Function),
     Variable(VariableDecl),
     Loc,
     Section,
     Pragma(String),
+    File(usize, String),
 }
 
 #[derive(Debug)]
@@ -143,6 +146,7 @@ pub struct Function {
 pub struct Parameter {
     pub name: String,
     pub ty: Type,
+    pub array: Option<u32>,
     pub ptr: bool,
     pub state_space: Option<StateSpace>,
     pub alignment: Option<u32>,
@@ -150,8 +154,31 @@ pub struct Parameter {
 
 #[derive(Debug)]
 pub enum Opcode {
+    Add {
+        ty: Type,
+        saturate: bool,
+        rnd: bool,
+        ftz: bool,
+    },
+    Sub {
+        ty: Type,
+        ftz: bool,
+    },
+    /// Count leading zeros
+    Clz(Type),
+    Not(Type),
+    /// Vote across thread group, Deprecated
+    Vote(Type),
+    /// Population count.
+    PopC(Type),
     Exit,
     Call(CallInst),
+    // CallPrototype {
+    //     parameters: Vec<Parameter>,
+    //     return_params: Vec<Parameter>,
+    //     no_return: bool,
+    // },
+    CallPrototype {},
     Abs {
         ty: Type,
         ftz: bool,
@@ -178,8 +205,34 @@ pub enum Opcode {
         ty: Type,
         ftz: bool,
         approx: bool,
+        rounding: Option<FloatRoundingMode>,
     },
-    Neg(Type),
+    Sqrt {
+        ty: Type,
+        ftz: bool,
+        approx: bool,
+        rounding: Option<FloatRoundingMode>,
+    },
+    RSqrt {
+        ty: Type,
+        ftz: bool,
+        approx: bool,
+        rounding: Option<FloatRoundingMode>,
+    },
+    Sin {
+        ty: Type,
+        approx: bool,
+        ftz: bool,
+    },
+    Cos {
+        ty: Type,
+        approx: bool,
+        ftz: bool,
+    },
+    Neg {
+        ty: Type,
+        ftz: bool,
+    },
     Max(Type),
     Min(Type),
     Shfl(Type),
@@ -190,7 +243,8 @@ pub enum Opcode {
     Cvt {
         from: Type,
         to: Type,
-        rounding: Option<FloatRoundingMode>,
+        rounding: Option<Either<FloatRoundingMode, IntegerRoundingMode>>,
+        saturate: bool,
     },
     Cvta {
         to: bool,
@@ -200,8 +254,10 @@ pub enum Opcode {
     Cp,
     Ret,
     Mov(Type),
-    Add(Type),
-    Sub(Type),
+    Lg2 {
+        ty: Type,
+        ftz: bool,
+    },
     Mul {
         ty: Type,
         mode: Option<MulMode>,
@@ -209,16 +265,37 @@ pub enum Opcode {
         ftz: bool,
         saturate: bool,
     },
+    Mul24 {
+        ty: Type,
+        mode: Option<MulMode>,
+    },
     Div {
+        approx: bool,
+        full: bool,
+        rounding: Option<FloatRoundingMode>,
         ty: Type,
         ftz: bool,
     },
     Shl(Type),
     Shr(Type),
+    Shf {
+        direction: ShfDirection,
+        mode: ShfMode,
+    },
     SetpLt,
     SetpGt,
     SetpEq,
     Ld(Type),
+    Ldu(Type),
+    Tex(Type, Type),
+    /// Select one source operand, based on the sign of the third operand.
+    Slct {
+        ftz: bool,
+        dtype: Type,
+        stype: Type,
+    },
+    /// Atomic reduction operations for thread-to-thread communication.
+    Atom(Type),
     LdMatrix {
         shape: Shape2,
         ty: Type,
@@ -236,10 +313,19 @@ pub enum Opcode {
     And(Type),
     Or(Type),
     XOr(Type),
+    Set {
+        cmp_op: PredicateOp,
+        ftz: bool,
+        dtype: Type,
+        stype: Type,
+    },
     Setp(PredicateOp, Type),
     Selp(Type),
     Bfe(Type),
     Bra,
+    Membar,
+    /// Query whether a generic address falls within a specified state space window
+    IsSpaceP(StateSpace),
 }
 
 #[derive(Debug)]
@@ -248,6 +334,7 @@ pub struct CallInst {
     pub return_operand: Option<Operand>,
     pub function: String,
     pub arguments: Vec<Operand>,
+    pub fproto: Option<String>,
 }
 
 /// Operands may be
@@ -255,13 +342,16 @@ pub struct CallInst {
 /// - constant expressions,
 /// - address expressions,
 /// - label names.
+/// - place holders
 #[derive(Debug)]
 pub enum Operand {
     Register(Register),
+    RegisterOffset(Register, i64),
     Constant(Constant),
     Address(AddressOperand),
     Vector(VectorOperand),
     Label(String),
+    PlaceHolder,
 }
 
 #[derive(Debug)]
@@ -273,22 +363,24 @@ pub enum Register {
 #[derive(Debug)]
 pub enum SpecialReg {
     StackPtr,
+    Clock,
+
     ThreadId,
     ThreadIdX,
     ThreadIdY,
     ThreadIdZ,
-    NumThread,
-    NumThreadX,
-    NumThreadY,
-    NumThreadZ,
-    CtaId,
-    CtaIdX,
-    CtaIdY,
-    CtaIdZ,
-    NumCta,
-    NumCtaX,
-    NumCtaY,
-    NumCtaZ,
+    BlockDim,
+    BlockDimX,
+    BlockDimY,
+    BlockDimZ,
+    BlockIdx,
+    BlockIdxX,
+    BlockIdxY,
+    BlockIdxZ,
+    GridDim,
+    GridDimX,
+    GridDimY,
+    GridDimZ,
 }
 
 #[derive(Debug)]
@@ -297,7 +389,7 @@ pub enum Constant {
     Float(f64),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum AddressOperand {
     /// the name of an addressable variable var.
     Address(String),
@@ -307,6 +399,8 @@ pub enum AddressOperand {
     Immediate(u32),
     /// an array element
     ArrayIndex(String, usize),
+    /// List
+    List(String, Vec<Operand>),
 }
 
 #[derive(Debug)]
@@ -334,7 +428,8 @@ pub enum FloatRoundingMode {
     Rp,
 }
 
-enum IntegerRoundingMode {
+#[derive(Debug)]
+pub enum IntegerRoundingMode {
     /// Round to nearest integer, choosing even integer if source is equidistant between two integers.
     Rni,
     /// Round to nearest integer in the direction of zero
@@ -350,6 +445,18 @@ pub enum MulMode {
     Hi,
     Lo,
     Wide,
+}
+
+#[derive(Debug)]
+pub enum ShfDirection {
+    Left,
+    Right,
+}
+
+#[derive(Debug)]
+pub enum ShfMode {
+    Wrap,
+    Clamp,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -426,6 +533,18 @@ impl From<Token> for FloatRoundingMode {
             Token::Rz => FloatRoundingMode::Rz,
             Token::Rm => FloatRoundingMode::Rm,
             Token::Rp => FloatRoundingMode::Rp,
+            _ => unreachable!(),
+        }
+    }
+}
+
+impl From<Token> for IntegerRoundingMode {
+    fn from(token: Token) -> Self {
+        match token {
+            Token::Rni => IntegerRoundingMode::Rni,
+            Token::Rzi => IntegerRoundingMode::Rzi,
+            Token::Rmi => IntegerRoundingMode::Rmi,
+            Token::Rpi => IntegerRoundingMode::Rpi,
             _ => unreachable!(),
         }
     }

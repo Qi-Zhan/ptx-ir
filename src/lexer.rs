@@ -1,3 +1,4 @@
+use logos::{Lexer, Logos};
 use std::fmt;
 
 fn lex_align(lex: &mut Lexer<'_, Token>) -> u32 {
@@ -31,11 +32,11 @@ fn lex_double_float(lex: &mut Lexer<'_, Token>) -> f64 {
     f64::from_bits(bits)
 }
 
-use logos::{Lexer, Logos};
 #[derive(Logos, Debug, Clone, PartialEq)]
 #[logos(skip r"[ \t\n\f]+")] // Ignore blank space
-#[logos(skip r"//.*")] // Ignore comment
-pub enum Token {
+#[logos(skip r"//.*")] // Ignore single line comments
+#[logos(skip r"/\*([^*]|\*[^/])*\*/")] // Ignore multi-line comments
+pub(crate) enum Token {
     // 4.3.1 Directives
     #[token(".address_size")]
     AddressSize,
@@ -49,13 +50,11 @@ pub enum Token {
     Alias,
     #[token(".extern")]
     Extern,
-    #[token(".maxntid")]
-    MaxNTid,
     #[regex(r".align[ \t\f\n]+\d+", lex_align)]
     Align(u32),
     #[token(".file")]
     File,
-    #[token(".minnctapersm")]
+    #[regex(r".minnctapersm[ \t\f\n]+\d+")]
     MinNCTapersm,
     #[token(".branchtargets")]
     BranchTargets,
@@ -91,10 +90,14 @@ pub enum Token {
     Entry,
     #[token(".maxnctapersm")]
     MaxNCTapersm,
-    #[regex(".reqntid [0-9]+")]
-    #[regex(".reqntid [0-9]+, [0-9]+")]
-    #[regex(".reqntid [0-9]+, [0-9]+, [0-9]+")]
+    #[regex(r".reqntid[ \t\f\n]?[0-9]+")]
+    #[regex(r".reqntid[ \t\f\n]?[0-9]+,[ \t\f\n]?[0-9]+")]
+    #[regex(r".reqntid[ \t\f\n]?[0-9]+,[ \t\f\n]?[0-9]+,[ \t\f\n]?[0-9]+")]
     ReqNTid,
+    #[regex(r".maxntid[ \t\f\n]?[0-9]+")]
+    #[regex(r".maxntid[ \t\f\n]?[0-9]+,[ \t\f\n]?[0-9]+")]
+    #[regex(r".maxntid[ \t\f\n]?[0-9]+,[ \t\f\n]?[0-9]+,[ \t\f\n]?[0-9]+")]
+    MaxNTid,
     #[token(".ptr")]
     Ptr,
     #[token(".type")]
@@ -400,6 +403,12 @@ pub enum Token {
     LaneMaskGt,
     #[token("%nctaid")]
     NCTAId,
+    #[token("%nctaid.x")]
+    NCTAIdX,
+    #[token("%nctaid.y")]
+    NCTAIdY,
+    #[token("%nctaid.z")]
+    NCTAIdZ,
     #[token("%smid")]
     SMId,
     #[token("%ctaid")]
@@ -549,6 +558,8 @@ pub enum Token {
     ShiftLeft,
     #[token(">>")]
     ShiftRight,
+    #[token("tex")]
+    Tex,
 
     // Delimiters
     #[token("(")]
@@ -571,6 +582,8 @@ pub enum Token {
     Semicolon,
     #[token(":")]
     Colon,
+    #[token("_")]
+    Underscore,
 
     // State Space
     /// Register, fast.
@@ -597,12 +610,16 @@ pub enum Token {
     Shared,
     /// Global texture memory (deprecated).
     #[token(".tex")]
-    Tex,
+    DotTex,
+    #[token(".texref")]
+    TexRef,
+    #[token(".surfref")]
+    SurfRef,
+    #[token(".samplerref")]
+    SamplerRef,
 
     #[regex(r#""([^"\\\x00-\x1F]|\\(["\\bnfrt/]|u[a-fA-F0-9]{4}))*""#, |lex| lex.slice().to_owned())]
     String(String),
-    // #[regex("//.*")]
-    // Comment,
     #[token(".sync")]
     Sync,
     #[token(".async")]
@@ -644,14 +661,22 @@ pub enum Token {
     Saturate,
     #[token(".rn")]
     Rn,
+    #[token(".rni")]
+    Rni,
     #[token(".rna")]
     Rna,
     #[token(".rz")]
     Rz,
+    #[token(".rzi")]
+    Rzi,
     #[token(".rm")]
     Rm,
+    #[token(".rmi")]
+    Rmi,
     #[token(".rp")]
     Rp,
+    #[token(".rpi")]
+    Rpi,
 
     #[token(".commit_group")]
     CommitGroup,
@@ -671,6 +696,18 @@ pub enum Token {
     X1,
     #[token(".x2")]
     X2,
+    #[token(".v1")]
+    V1,
+    #[token(".v2")]
+    V2,
+    #[token(".v4")]
+    V4,
+    #[token(".1d")]
+    D1,
+    #[token(".2d")]
+    D2,
+    #[token(".4d")]
+    D4,
     #[token(".row")]
     Row,
     #[token(".col")]
@@ -693,13 +730,28 @@ pub enum Token {
     To,
     #[token(".uni")]
     Uni,
+
+    #[token(".l")]
+    L,
+    #[token(".r")]
+    R,
+    #[token(".clamp")]
+    Clamp,
+    #[token(".wrap")]
+    Wrap,
+    #[token(".ballot")]
+    Ballot,
+    #[token(".all")]
+    All,
+    #[token(".any")]
+    Any,
 }
 
 impl Token {
-    pub fn is_function(&self) -> bool {
+    pub(crate) fn is_function(&self) -> bool {
         matches!(self, Token::Func | Token::Entry)
     }
-    pub fn is_directive(&self) -> bool {
+    pub(crate) fn is_directive(&self) -> bool {
         matches!(
             self,
             Token::AddressSize
@@ -717,8 +769,8 @@ impl Token {
                 | Token::Func
                 | Token::NoReturn
                 | Token::Target
-                | Token::CallPrototype
-                | Token::CallTargets
+                // | Token::CallPrototype
+                // | Token::CallTargets
                 | Token::Loc
                 | Token::Pragma
                 | Token::Version
@@ -742,7 +794,12 @@ impl Token {
                 | Token::Shared
                 | Token::Global
                 | Token::WaitGroup
+                | Token::Const
+                | Token::Local
         )
+    }
+    pub(crate) fn can_be_id(&self) -> bool {
+        matches!(self, Token::Identifier(_) | Token::Tex)
     }
 }
 
@@ -1006,7 +1063,7 @@ impl fmt::Display for Token {
             Token::Local => f.write_str(".local"),
             Token::Param => f.write_str(".param"),
             Token::Shared => f.write_str(".shared"),
-            Token::Tex => f.write_str(".tex"),
+            Token::DotTex => f.write_str(".tex"),
             Token::String(s) => write!(f, "{}", s),
             Token::Sync => f.write_str(".sync"),
             Token::Async => f.write_str(".async"),
@@ -1061,6 +1118,31 @@ impl fmt::Display for Token {
             Token::Leu => f.write_str(".leu"),
             Token::Gtu => f.write_str(".gtu"),
             Token::Geu => f.write_str(".geu"),
+            Token::Rni => f.write_str(".rni"),
+            Token::Rzi => f.write_str(".rzi"),
+            Token::Rmi => f.write_str(".rmi"),
+            Token::Rpi => f.write_str(".rpi"),
+            Token::NCTAIdX => f.write_str("%nctaid.x"),
+            Token::NCTAIdY => f.write_str("%nctaid.y"),
+            Token::NCTAIdZ => f.write_str("%nctaid.z"),
+            Token::TexRef => f.write_str(".texref"),
+            Token::SurfRef => f.write_str(".surfref"),
+            Token::SamplerRef => f.write_str(".samplerref"),
+            Token::V1 => f.write_str(".v1"),
+            Token::V2 => f.write_str(".v2"),
+            Token::V4 => f.write_str(".v4"),
+            Token::D1 => f.write_str(".1d"),
+            Token::D2 => f.write_str(".2d"),
+            Token::D4 => f.write_str(".4d"),
+            Token::L => f.write_str(".l"),
+            Token::R => f.write_str(".r"),
+            Token::Clamp => f.write_str(".clamp"),
+            Token::Wrap => f.write_str(".wrap"),
+            Token::Tex => f.write_str("tex"),
+            Token::Ballot => f.write_str(".ballot"),
+            Token::All => f.write_str(".all"),
+            Token::Any => f.write_str(".any"),
+            Token::Underscore => f.write_str("_"),
         }
     }
 }
