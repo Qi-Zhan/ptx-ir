@@ -1,6 +1,6 @@
 [package]
 name = "ptx-ir"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 authors = ["Qi Zhan <qizhan@zju.edu.cn>"]
 description = "Parallel Thread Execution (PTX) IR structure and parser"

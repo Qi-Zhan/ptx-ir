@@ -87,7 +87,7 @@ dependencies = [
 
 [[package]]
 name = "ptx-ir"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "codespan-reporting",
  "either",
